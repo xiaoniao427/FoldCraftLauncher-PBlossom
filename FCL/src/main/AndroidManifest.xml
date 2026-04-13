@@ -154,6 +154,11 @@
             </intent-filter>
         </service>
 
+        <!-- 您从百度网站获取的APP KEY，根据实际您的APP申请的APP_KEY进行修改 -->
+        <meta-data
+            android:name="BaiduMobAd_STAT_ID"
+            android:value="2f0a0368f1" />
+        
         <provider
             android:name=".scoped.FolderProvider"
             android:authorities="${applicationId}.document.provider"
