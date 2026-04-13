@@ -41,7 +41,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.tungsten.fcl.server"
+        applicationId = "com.pblossom.fcl.server"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1298
