@@ -161,4 +161,5 @@ dependencies {
     implementation(libs.segmented.button)
     implementation(libs.datastore)
     implementation(libs.kotlinx.serialization.json)
+    implementation("com.baidu.mobstat:mtj-circle-plugin:latest.integration")
 }
