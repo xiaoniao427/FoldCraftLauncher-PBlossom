@@ -12,7 +12,7 @@ plugins {
 }
 
 android {
-    namespace = "com.tungsten.fcl"
+    namespace = "com.pblossom.fcl.server"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     var localProperty: Properties? = null
