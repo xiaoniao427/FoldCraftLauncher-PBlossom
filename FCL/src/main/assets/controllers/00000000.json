@@ -1,11 +1,11 @@
 {
   "id": "00000000",
   "name": "Default",
-  "version": "3.3.3",
-  "versionCode": 3333,
-  "author": "root-S7",
-  "description": "多人游戏基本布局",
-  "controllerVersion": 33,
+  "version": "1.2.1",
+  "versionCode": 1210,
+  "author": "Tungsten",
+  "description": "Default controller of Fold Craft Launcher.",
+  "controllerVersion": 20,
   "buttonStyles": [
     {
       "name": "Default",
@@ -934,18 +934,10 @@
               }
             },
             "event": {
-              "upKeycode": [
-                17
-              ],
-              "downKeycode": [
-                31
-              ],
-              "leftKeycode": [
-                30
-              ],
-              "rightKeycode": [
-                32
-              ],
+              "upKeycode": 17,
+              "downKeycode": 31,
+              "leftKeycode": 30,
+              "rightKeycode": 32,
               "followOption": "CENTER_FOLLOW",
               "sneak": true,
               "sneakKeycode": 42

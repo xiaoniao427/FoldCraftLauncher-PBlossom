@@ -1,0 +1,9 @@
+{
+  "id" : "7608efc81ff54977a87d8e149e577d91",
+  "name" : "ShineF_Borealics",
+  "properties" : [ {
+    "name" : "textures",
+    "value" : "ewogICJ0aW1lc3RhbXAiIDogMTc2NzAxMTY0NzY4OCwKICAicHJvZmlsZUlkIiA6ICI3NjA4ZWZjODFmZjU0OTc3YTg3ZDhlMTQ5ZTU3N2Q5MSIsCiAgInByb2ZpbGVOYW1lIiA6ICJTaGluZUZfQm9yZWFsaWNzIiwKICAidGV4dHVyZXMiIDogewogICAgIlNLSU4iIDogewogICAgICAidXJsIiA6ICJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlL2EzYmQxNjA3OWY3NjRjZDU0MWUwNzJlODg4ZmU0Mzg4NWU3MTFmOTg2NTgzMjNkYjBmOWE2MDQ1ZGE5MWVlN2EiCiAgICB9CiAgfQp9"
+  } ],
+  "profileActions" : [ ]
+}

@@ -19,7 +19,7 @@
         "pojavBigCore": false,
         "notCheckMod": false
       },
-      "gameDir": "/data/data/com.tungsten.fcl.server/.minecraft",
+      "gameDir": "/data/data/com.pblossom.fcl.server/.minecraft",
       "selectedMinecraftVersion": ""
     },
     "私有目录": {
@@ -27,23 +27,31 @@
         "usesGlobal": true,
         "javaArgs": "",
         "minecraftArgs": "",
-        "maxMemory": -1,
+        "maxMemory": 5120,
         "autoMemory": true,
         "serverIp": "",
+        "java": "Auto",
         "newScaleFactor": 100,
         "notCheckGame": false,
         "notCheckJVM": false,
         "beGesture": true,
         "vulkanDriverSystem": false,
-        "isolateGameDir": false,
+        "controller": "f9b80a8f",
+        "renderer": "e7b90ed6-e518-4d4e-93dc-5c7133cd5b31",
+        "driver": "Turnip",
+        "isolateGameDir": true,
         "pojavBigCore": false,
-        "notCheckMod": false
+        "uuid": "",
+        "notCheckMod": false,
+        "debugLog": false
       },
-      "gameDir": "/storage/emulated/0/Android/data/com.tungsten.fcl.server/files/.minecraft",
-      "selectedMinecraftVersion": ""
+      "gameDir": "/storage/emulated/0/Android/data/com.pblossom.fcl.server/files/.minecraft",
+      "selectedMinecraftVersion": "PBlossom梨花与落"
     }
   },
   "downloadThreads": 64,
   "downloadType": "bmclapi",
-  "last": "私有目录"
+  "last": "私有目录",
+  "uiVersion": 0,
+  "versionListSource": "balanced"
 }
