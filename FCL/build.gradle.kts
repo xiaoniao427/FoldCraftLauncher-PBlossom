@@ -12,7 +12,7 @@ plugins {
 }
 
 android {
-    namespace = "com.pblossom.fcl.server"
+    namespace = "com.tungsten.fcl"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     var localProperty: Properties? = null
@@ -41,7 +41,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.pblossom.fcl.server"
+        applicationId = "com.tungsten.fcl.server"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1298
