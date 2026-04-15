@@ -1,64 +1,58 @@
-name: Build and Draft Release
+name: Android Build (Debug Sign)
 
 on:
   push:
-    tags:
-      - 'v*'               # 推送 v 开头标签时触发（如 v1.0.0）
-  workflow_dispatch:       # 允许手动触发
-    inputs:
-      tag_name:
-        description: 'Release tag (e.g. v1.0.0)'
-        required: true
-        default: 'v0.0.0'
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:   # 允许手动触发
 
 jobs:
-  build-and-draft:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 40
-    permissions:
-      contents: write      # 需要写入权限才能创建 Release 和上传资产
+  build:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           submodules: recursive
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: 17
-          cache: 'gradle'
+          java-version: '17'
 
-      - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v3
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
-      - name: Build arm64 release APK
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # 创建 local.properties（可选，因为使用 debug 签名不需要密码，但代码中会读取 curse/oauth api key）
+      # 如果没有这些 key，可以提供占位符
+      - name: Create local.properties
         run: |
-          chmod +x gradlew
-          ./gradlew assemblerelease -Darch=arm64 --no-daemon
+          echo "key-store-password=ignored" > local.properties
+          echo "curse-api-key=dummy" >> local.properties
+          echo "oauth-api-key=dummy" >> local.properties
+          echo "arch=all" >> local.properties
 
-      - name: Find APK file
-        id: apk
+      # 确保 debug-key.jks 存在（如果仓库中没有，则生成一个临时 debug 密钥库）
+      - name: Ensure debug keystore exists
         run: |
-          APK_PATH=$(find FCL/build/outputs/apk/release -name "*.apk" | head -n 1)
-          if [ -z "$APK_PATH" ]; then
-            echo "No APK found!"
-            exit 1
+          if [ ! -f debug-key.jks ]; then
+            keytool -genkey -v -keystore debug-key.jks -alias FCL-Debug -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass FCL-Debug -keypass FCL-Debug -dname "CN=Debug, OU=Debug, O=Debug, L=Debug, ST=Debug, C=DE"
           fi
-          echo "path=$APK_PATH" >> $GITHUB_OUTPUT
-          echo "name=$(basename $APK_PATH)" >> $GITHUB_OUTPUT
+          # 将 debug-key.jks 移动到上级目录（因为 signingConfig 中使用 file("../debug-key.jks")）
+          mv debug-key.jks ../debug-key.jks || true
 
-      - name: Create draft release and upload APK
-        uses: softprops/action-gh-release@v2
+      - name: Build release APK (with debug signature)
+        run: ./gradlew :FCL:assembleRelease
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name || github.ref_name }}
-          name: Release ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name || github.ref_name }}
-          draft: true       # 草稿状态，不会正式发布
-          prerelease: false
-          files: ${{ steps.apk.outputs.path }}
-          fail_on_unmatched_files: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: FCL-Release-DebugSigned
+          path: FCL/build/outputs/apk/release/*.apk
