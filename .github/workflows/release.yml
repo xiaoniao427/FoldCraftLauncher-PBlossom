@@ -1,11 +1,7 @@
 name: Android Build and Draft Release
 
 on:
-  push:
-    branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
-  workflow_dispatch:   # 手动触发
+  workflow_dispatch:   # 仅允许手动触发
 
 jobs:
   build:
