@@ -161,5 +161,5 @@ dependencies {
     implementation(libs.segmented.button)
     implementation(libs.datastore)
     implementation(libs.kotlinx.serialization.json)
-    compile files('libs/Baidu_Mtj_3.7.4.2.jar')
+    compile files('libs/Baidu_Mtj_android_4.0.11.0.jar')
 }
