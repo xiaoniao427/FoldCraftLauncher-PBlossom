@@ -40,8 +40,14 @@ android {
         }
     }
 
+    sourceSets {
+        main {
+            jniLibs.srcDirs("libs")
+        }
+    }
+
     defaultConfig {
-        applicationId = "com.pblossom.fcl.server"
+        applicationId = "com.tungsten.fcl.server"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1298
@@ -55,7 +61,12 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("FCLKey")
+            // CI 环境（GitHub Actions）使用 Debug 签名，否则使用正式签名
+            signingConfig = if (System.getenv("CI") == "true") {
+                signingConfigs.getByName("FCLDebugKey")
+            } else {
+                signingConfigs.getByName("FCLKey")
+            }
         }
         configureEach {
             resValue("string", "app_version", defaultConfig.versionName.toString())
