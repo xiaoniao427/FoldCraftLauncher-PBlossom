@@ -49,10 +49,10 @@ jobs:
           mv debug-key.jks ../debug-key.jks || true
 
       - name: Build release APK (with debug signature)
-        run: ./gradlew :FCL:assembleRelease
+        run: ./gradlew :FCL:assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: FCL-Release-DebugSigned
-          path: FCL/build/outputs/apk/release/*.apk
+          path: FCL/build/outputs/apk/debug/*.apk
