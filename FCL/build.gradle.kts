@@ -11,6 +11,16 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "2.3.20"
 }
 
+// 正确应用百度统计插件
+apply(plugin = "mtj-circle-plugin")
+
+// 配置百度统计插件
+mtjCirclePluginConfig {
+    appkey = "2f0a0368f1"
+    debug = false
+    enabled = true
+}
+
 android {
     namespace = "com.tungsten.fcl"
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -55,7 +65,6 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
-            // CI 环境使用 Debug 签名，否则使用正式签名
             signingConfig = if (System.getenv("CI") == "true") {
                 signingConfigs.getByName("FCLDebugKey")
             } else {
@@ -166,5 +175,5 @@ dependencies {
     implementation(libs.segmented.button)
     implementation(libs.datastore)
     implementation(libs.kotlinx.serialization.json)
-    apply(plugin = "mtj-circle-plugin")
+    implementation(files("libs/Baidu_Mtj_android_4.0.11.0.jar"))
 }
