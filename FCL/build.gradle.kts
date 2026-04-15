@@ -12,7 +12,7 @@ plugins {
 }
 
 android {
-    namespace = "com.tungsten.fcl"
+    namespace = "com.pblossom.fcl.server"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     var localProperty: Properties? = null
@@ -37,12 +37,6 @@ android {
             storePassword = "FCL-Debug"
             keyAlias = "FCL-Debug"
             keyPassword = "FCL-Debug"
-        }
-    } // 正确闭合 signingConfigs
-
-    sourceSets {
-        main {
-            jniLibs.srcDirs("libs")
         }
     }
 
