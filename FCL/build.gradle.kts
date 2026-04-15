@@ -40,12 +40,6 @@ android {
         }
     }
 
-    sourceSets {
-        main {
-            jniLibs.srcDirs("libs")
-        }
-    }
-
     defaultConfig {
         applicationId = "com.tungsten.fcl.server"
         minSdk = libs.versions.minSdk.get().toInt()
@@ -61,7 +55,7 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
-            // CI 环境（GitHub Actions）使用 Debug 签名，否则使用正式签名
+            // CI 环境使用 Debug 签名，否则使用正式签名
             signingConfig = if (System.getenv("CI") == "true") {
                 signingConfigs.getByName("FCLDebugKey")
             } else {
