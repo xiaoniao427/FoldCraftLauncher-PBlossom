@@ -23,7 +23,7 @@ android {
     val pwd = localProperty?.getProperty("key-store-password", "null")
     val curseApiKey = localProperty?.getProperty("curse-api-key", "null")
     val oauthApiKey = localProperty?.getProperty("oauth-api-key", "null")
-    if(localProperty != null && localProperty.getProperty("arch", "all") == "arm64") System.setProperty("arch", "arm64")
+    if (localProperty != null && localProperty.getProperty("arch", "all") == "arm64") System.setProperty("arch", "arm64")
 
     signingConfigs {
         create("FCLKey") {
@@ -38,11 +38,12 @@ android {
             keyAlias = "FCL-Debug"
             keyPassword = "FCL-Debug"
         }
-     sourceSets {
+    } // 正确闭合 signingConfigs
+
+    sourceSets {
         main {
             jniLibs.srcDirs("libs")
         }
-
     }
 
     defaultConfig {
