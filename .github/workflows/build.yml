@@ -1,11 +1,7 @@
 name: Android Build (Debug Sign)
 
 on:
-  push:
-    branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
-  workflow_dispatch:   # 允许手动触发
+  workflow_dispatch:   # 仅允许手动触发
 
 jobs:
   build:
@@ -29,8 +25,7 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # 创建 local.properties（可选，因为使用 debug 签名不需要密码，但代码中会读取 curse/oauth api key）
-      # 如果没有这些 key，可以提供占位符
+      # 创建 local.properties（提供占位符）
       - name: Create local.properties
         run: |
           echo "key-store-password=ignored" > local.properties
@@ -48,11 +43,11 @@ jobs:
           # 将 debug-key.jks 移动到上级目录（因为 signingConfig 中使用 file("../debug-key.jks")）
           mv debug-key.jks ../debug-key.jks || true
 
-      - name: Build release APK (with debug signature)
+      - name: Build Debug APK
         run: ./gradlew :FCL:assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: FCL-Release-DebugSigned
+          name: FCL-Debug
           path: FCL/build/outputs/apk/debug/*.apk
