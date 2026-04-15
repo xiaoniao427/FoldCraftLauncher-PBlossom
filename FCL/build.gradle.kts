@@ -11,6 +11,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "2.3.20"
 }
 
+apply(plugin = "mtj-circle-plugin")
 // 配置百度统计插件
 mtjCirclePluginConfig {
     appkey = "2f0a0368f1"
