@@ -4,3 +4,12 @@ plugins {
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.kotlin.android) apply false
 }
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    // 引入插件库
+    classpath 'com.baidu.mobstat:mtj-circle-plugin:latest.integration'
+}
