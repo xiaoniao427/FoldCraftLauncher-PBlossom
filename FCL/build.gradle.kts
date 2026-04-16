@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Properties
-import com.baidu.mobstat.StatService
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
