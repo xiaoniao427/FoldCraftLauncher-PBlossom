@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.baidu.mtj.StatService;           // 导入百度统计
 import com.tungsten.fcl.R;
 import com.tungsten.fcl.activity.SplashActivity;
 import com.tungsten.fclcore.util.io.IOUtils;
@@ -21,23 +22,23 @@ import com.tungsten.fcllibrary.component.view.FCLTextView;
 
 import java.io.IOException;
 
-// 假设 StatService 需要 import，如果缺失请加上：
-// import com.whatever.StatService;
-
 public class EulaFragment extends FCLFragment implements View.OnClickListener {
-
 
     private FCLProgressBar progressBar;
     private FCLTextView eula;
     private FCLButton next;
+
+    // 你的百度统计 AppKey 和渠道（建议定义成常量，或从配置文件读取）
+    private static final String BAIDU_APP_KEY = "你的实际AppKey";
+    private static final String BAIDU_CHANNEL = "official";
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_eula, container, false);
 
-        // ✅ 正确的初始化调用：传入实际参数
-        StatService.init(context, appKey, appChannel);
+        // 初始化百度统计（确保只调用一次，可加标志判断）
+        StatService.init(requireContext(), BAIDU_APP_KEY, BAIDU_CHANNEL);
 
         progressBar = findViewById(view, R.id.progress);
         eula = findViewById(view, R.id.eula);
@@ -75,7 +76,7 @@ public class EulaFragment extends FCLFragment implements View.OnClickListener {
                 SharedPreferences sharedPreferences = getActivity().getSharedPreferences("launcher", MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
                 editor.putBoolean("isFirstLaunch", false);
-                // 这里原来的 StatService.start() 和 setAuthorizedState 保留
+                // 百度统计：开始会话并授权
                 StatService.start();
                 StatService.setAuthorizedState(getActivity(), true);
                 editor.apply();
