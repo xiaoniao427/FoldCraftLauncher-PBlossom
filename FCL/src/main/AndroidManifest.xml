@@ -160,26 +160,7 @@
                 <action android:name="android.net.VpnService" />
             </intent-filter>
         </service>
-
-        <!-- 您从百度网站获取的APP KEY，根据实际您的APP申请的APP_KEY进行修改 -->
-<meta-data
-    android:name="BaiduMobAd_STAT_ID"
-    android:value="2f0a0368f1" />
-
-<!-- 渠道商编号 -->
-<meta-data
-    android:name="BaiduMobAd_CHANNEL"
-    android:value="Baidu Market" />
-
-<!-- 是否开启错误日志统计，默认为false -->
-<meta-data
-    android:name="BaiduMobAd_EXCEPTION_LOG"
-    android:value="true" />
-
-<!-- 日志仅在wifi网络下发送，默认为false -->
-<meta-data
-    android:name="BaiduMobAd_ONLY_WIFI"
-    android:value="false" />
+        
         
         <provider
             android:name=".scoped.FolderProvider"
