@@ -11,7 +11,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.baidu.mtj.StatService;           // 导入百度统计
+// import com.baidu.mobstat.StatService;           // 导入百度统计
 import com.tungsten.fcl.R;
 import com.tungsten.fcl.activity.SplashActivity;
 import com.tungsten.fclcore.util.io.IOUtils;
