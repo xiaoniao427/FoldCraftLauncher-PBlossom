@@ -69,6 +69,7 @@ public class EulaFragment extends FCLFragment implements View.OnClickListener {
                 SharedPreferences sharedPreferences = getActivity().getSharedPreferences("launcher", MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
                 editor.putBoolean("isFirstLaunch", false);
+                StatService.start();
                 StatService.setAuthorizedState(getActivity(), true);
                 editor.apply();
                 ((SplashActivity) getActivity()).start();
