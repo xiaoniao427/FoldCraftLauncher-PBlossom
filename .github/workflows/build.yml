@@ -48,11 +48,12 @@ jobs:
           echo "RELEASE_KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> gradle.properties
           echo "RELEASE_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> gradle.properties
 
-      - name: Build Debug APK (custom signed)
-        run: ./gradlew :FCL:assembleDebug
+      # 构建已签名的 Release APK（使用自定义签名）
+      - name: Build Release APK
+        run: ./gradlew :FCL:assembleRelease
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: FCL-Debug
-          path: FCL/build/outputs/apk/debug/*.apk
+          path: FCL/build/outputs/apk/release/*.apk
