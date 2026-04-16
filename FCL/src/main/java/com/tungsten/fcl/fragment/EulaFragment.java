@@ -22,8 +22,8 @@ import com.umeng.commonsdk.UMConfigure;
 
 import java.io.IOException;
 
-    public class EulaFragment extends FCLFragment implements View.OnClickListener {
-    
+public class EulaFragment extends FCLFragment implements View.OnClickListener {
+
     private FCLProgressBar progressBar;
     private FCLTextView eula;
     private FCLButton next;
@@ -66,19 +66,18 @@ import java.io.IOException;
     public void onClick(View view) {
         if (view == next) {
             if (getActivity() != null) {
-                // 用户同意 EULA，进行友盟统计的正式初始化
-                // 注意：AppKey 和 Channel 可以从 Manifest 读取，或直接传入
-                // 此处假设已在 AndroidManifest.xml 中配置了 UMENG_APPKEY 和 UMENG_CHANNEL
-                // 如果未配置，需要显式传入 AppKey 和 Channel
+                // 用户同意 EULA，进行友盟正式初始化
+                // 注意：appkey 和 channel 必须与 Application 中 preInit 使用的保持一致
+                // 如果已在 AndroidManifest.xml 中配置，可以传 null；否则需显式传入相同值
                 UMConfigure.init(
                     requireActivity(),
-                    null,          // 如果 Manifest 中有 UMENG_APPKEY，可传 null
-                    null,          // 如果 Manifest 中有 UMENG_CHANNEL，可传 null
+                    null,          // 与 preInit 保持一致的 appkey，或 null（如果 Manifest 已配置）
+                    null,          // 与 preInit 保持一致的 channel，或 null（如果 Manifest 已配置）
                     UMConfigure.DEVICE_TYPE_PHONE,
                     null
                 );
                 // 可选：开启调试日志（正式发布时建议关闭）
-                UMConfigure.setLogEnabled(true);
+                // UMConfigure.setLogEnabled(true);
 
                 SharedPreferences sharedPreferences = getActivity().getSharedPreferences("launcher", MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
