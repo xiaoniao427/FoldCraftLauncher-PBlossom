@@ -166,4 +166,10 @@ dependencies {
     implementation(libs.segmented.button)
     implementation(libs.datastore)
     implementation(libs.kotlinx.serialization.json)
+    // 友盟统计（必须）
+    implementation("com.umeng.umsdk:common:9.4.4")
+    implementation("com.umeng.umsdk:asms:1.4.1")
+
+    // 错误分析（U-APM）（可选）
+    implementation("com.umeng.umsdk:apm:1.2.0")
 }
