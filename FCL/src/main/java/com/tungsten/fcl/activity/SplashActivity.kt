@@ -139,9 +139,8 @@ class SplashActivity : FCLActivity() {
         if (sharedPreferences.getBoolean("isFirstLaunch", true)) {
             supportFragmentManager.beginTransaction()
                 .setCustomAnimations(R.anim.frag_start_anim, R.anim.frag_stop_anim)
-                supportFragmentManager.beginTransaction()
-    .replace(R.id.container, EulaFragment(), null)
-    .commit()
+                .replace(R.id.container, EulaFragment(), null)
+                .commit()
         } else {
             lifecycleScope.launch {
                 val waitDialog = FCLWaitDialog.Builder(this@SplashActivity)
@@ -156,8 +155,9 @@ class SplashActivity : FCLActivity() {
                     waitDialog?.dismiss()
                     supportFragmentManager.beginTransaction()
                         .setCustomAnimations(R.anim.frag_start_anim, R.anim.frag_stop_anim)
-                        .replace(R.id.fragment, RuntimeFragment::class.java, null).commit()
-                }catch(e: Exception) {
+                        .replace(R.id.fragment, RuntimeFragment::class.java, null)
+                        .commit()
+                } catch(e: Exception) {
                     waitDialog?.dismiss()
                     showErrorDialog(this@SplashActivity, e.message, false)
                 }
