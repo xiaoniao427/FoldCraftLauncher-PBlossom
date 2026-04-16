@@ -22,10 +22,6 @@ import com.umeng.commonsdk.UMConfigure;
 
 import java.io.IOException;
 
-// SDK预初始化函数不会采集设备信息，也不会向友盟后台上报数据。
-// preInit预初始化函数耗时极少，不会影响App首次冷启动用户体验
-public static void preInit(Context context, String appkey, String channel)
-
     public class EulaFragment extends FCLFragment implements View.OnClickListener {
     
     private FCLProgressBar progressBar;
@@ -36,6 +32,10 @@ public static void preInit(Context context, String appkey, String channel)
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_eula, container, false);
+
+// SDK预初始化函数不会采集设备信息，也不会向友盟后台上报数据。
+// preInit预初始化函数耗时极少，不会影响App首次冷启动用户体验
+public static void preInit(Context context, String appkey, String channel)
 
         progressBar = findViewById(view, R.id.progress);
         eula = findViewById(view, R.id.eula);
