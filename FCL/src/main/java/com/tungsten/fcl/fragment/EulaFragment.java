@@ -78,6 +78,7 @@ public class EulaFragment extends FCLFragment implements View.OnClickListener {
                 );
                 // 可选：开启调试日志（正式发布时建议关闭）
                 // UMConfigure.setLogEnabled(true);
+                UMConfigure.init()
 
                 SharedPreferences sharedPreferences = getActivity().getSharedPreferences("launcher", MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
