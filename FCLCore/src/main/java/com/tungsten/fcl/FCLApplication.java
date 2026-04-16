@@ -21,12 +21,12 @@ public class FCLApplication extends Application implements Application.ActivityL
     public void onCreate() {
         // enabledStrictMode();
         super.onCreate();
-        
+
         // 友盟预初始化：不会采集设备信息，也不会向友盟后台上报数据
         // preInit预初始化函数耗时极少，不会影响App首次冷启动用户体验
         // 如果 Manifest 中配置了 UMENG_APPKEY 和 UMENG_CHANNEL，可传 null
         UMConfigure.preInit(this, null, null);
-        
+
         this.registerActivityLifecycleCallbacks(this);
 //        PerfUtil.install();
         FCLPath.loadPaths(getApplicationContext());
