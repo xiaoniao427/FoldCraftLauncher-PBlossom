@@ -21,20 +21,29 @@ import com.tungsten.fcllibrary.component.view.FCLTextView;
 
 import java.io.IOException;
 
+// 假设 StatService 需要 import，如果缺失请加上：
+// import com.whatever.StatService;
+
 public class EulaFragment extends FCLFragment implements View.OnClickListener {
+
+    // 定义统计 SDK 的 AppKey 和渠道名（请替换为真实值）
+    private static final String STAT_APP_KEY = "2f0a0368f1";
+    private static final String STAT_APP_CHANNEL = "github"; // 例如 "official", "googleplay" 等
 
     private FCLProgressBar progressBar;
     private FCLTextView eula;
     private FCLButton next;
-    StatService.init(Context context, String appKey, String appChannel);
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_eula, container, false);
 
+        // ✅ 正确的初始化调用：传入实际参数
+        StatService.init(requireContext(), STAT_APP_KEY, STAT_APP_CHANNEL);
+
         progressBar = findViewById(view, R.id.progress);
         eula = findViewById(view, R.id.eula);
-
         next = findViewById(view, R.id.next);
         next.setOnClickListener(this);
 
@@ -69,6 +78,7 @@ public class EulaFragment extends FCLFragment implements View.OnClickListener {
                 SharedPreferences sharedPreferences = getActivity().getSharedPreferences("launcher", MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
                 editor.putBoolean("isFirstLaunch", false);
+                // 这里原来的 StatService.start() 和 setAuthorizedState 保留
                 StatService.start();
                 StatService.setAuthorizedState(getActivity(), true);
                 editor.apply();
