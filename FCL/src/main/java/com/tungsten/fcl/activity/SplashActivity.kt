@@ -139,7 +139,9 @@ class SplashActivity : FCLActivity() {
         if (sharedPreferences.getBoolean("isFirstLaunch", true)) {
             supportFragmentManager.beginTransaction()
                 .setCustomAnimations(R.anim.frag_start_anim, R.anim.frag_stop_anim)
-                .replace(R.id.fragment, EulaFragment::class.java, null).commit()
+                supportFragmentManager.beginTransaction()
+    .replace(R.id.container, EulaFragment(), null)
+    .commit()
         } else {
             lifecycleScope.launch {
                 val waitDialog = FCLWaitDialog.Builder(this@SplashActivity)
