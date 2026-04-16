@@ -167,4 +167,5 @@ dependencies {
     implementation(libs.datastore)
     implementation(libs.kotlinx.serialization.json)
     implementation(files("libs/Baidu_Mtj_android_4.0.11.0.jar"))
+    implementation ("com.baidu.mobstat:mtj-sdk:latest.integration")
 }
