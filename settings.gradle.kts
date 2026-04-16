@@ -14,9 +14,10 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven("https://jitpack.io")
+        maven("https://repo1.maven.org/maven2/")   // 友盟
     }
 }
-rootProject.name = "Fold Craft Launcher"
+rootProject.name = "PBlossom"
 include(":FCL")
 include(":FCLCore")
 include(":FCLauncher")
