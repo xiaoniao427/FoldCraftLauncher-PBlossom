@@ -27,7 +27,7 @@ import java.io.IOException;
 public static void preInit(Context context, String appkey, String channel)
     
 public class EulaFragment extends FCLFragment implements View.OnClickListener {
-
+    
     private FCLProgressBar progressBar;
     private FCLTextView eula;
     private FCLButton next;
