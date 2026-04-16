@@ -1,7 +1,7 @@
 name: Android Build (Debug Sign)
 
 on:
-  workflow_dispatch:   # 仅允许手动触发
+  workflow_dispatch:
 
 jobs:
   build:
@@ -33,17 +33,22 @@ jobs:
           echo "oauth-api-key=dummy" >> local.properties
           echo "arch=all" >> local.properties
 
-      # 确保 debug-key.jks 存在（如果仓库中没有，则生成一个临时 debug 密钥库）
-      - name: Ensure debug keystore exists
+      # 从 Secrets 中恢复自定义 keystore 文件
+      - name: Decode Keystore
         run: |
-          if [ ! -f debug-key.jks ]; then
-            keytool -genkey -v -keystore debug-key.jks -alias FCL-Debug -keyalg RSA -keysize 2048 -validity 10000 \
-              -storepass FCL-Debug -keypass FCL-Debug -dname "CN=Debug, OU=Debug, O=Debug, L=Debug, ST=Debug, C=DE"
-          fi
-          # 将 debug-key.jks 移动到上级目录（因为 signingConfig 中使用 file("../debug-key.jks")）
-          mv debug-key.jks ../debug-key.jks || true
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > mykey.jks
+          # 移动到上级目录（如果项目签名配置中使用 file("../mykey.jks")）
+          mv mykey.jks ../mykey.jks || true
 
-      - name: Build Debug APK
+      # 创建 gradle.properties 并写入签名配置（如果项目使用 gradle.properties 变量）
+      - name: Setup signing config
+        run: |
+          echo "RELEASE_STORE_FILE=../mykey.jks" >> gradle.properties
+          echo "RELEASE_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> gradle.properties
+          echo "RELEASE_KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> gradle.properties
+          echo "RELEASE_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> gradle.properties
+
+      - name: Build Debug APK (custom signed)
         run: ./gradlew :FCL:assembleDebug
 
       - name: Upload APK
