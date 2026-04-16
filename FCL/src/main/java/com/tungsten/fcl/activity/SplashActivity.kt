@@ -139,7 +139,7 @@ class SplashActivity : FCLActivity() {
         if (sharedPreferences.getBoolean("isFirstLaunch", true)) {
             supportFragmentManager.beginTransaction()
                 .setCustomAnimations(R.anim.frag_start_anim, R.anim.frag_stop_anim)
-                .replace(R.id.container, EulaFragment(), null)
+                .replace(R.id.fragment, EulaFragment(), null)   // 修改为 fragment
                 .commit()
         } else {
             lifecycleScope.launch {
