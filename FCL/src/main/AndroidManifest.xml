@@ -111,17 +111,16 @@
             android:screenOrientation="sensorLandscape" />
 
         <!-- 友盟回调 Activity（合并添加） -->
-        <activity
-            android:name=".MainActivity"
-            android:label="@string/app_name"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="um.69e0f1b36f259537c79a2e80" />
-            </intent-filter>
-        </activity>
+<activity
+    android:name=".UMCallbackActivity"
+    android:exported="true">
+    <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="um.69e0f1b36f259537c79a2e80" />
+    </intent-filter>
+</activity>
 
         <activity
             android:name=".activity.WebActivity"
