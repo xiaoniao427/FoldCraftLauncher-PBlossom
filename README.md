@@ -4,13 +4,6 @@
 
 <h1 align="center">Fold Craft Launcher —— 整合包版</h1>
 
-<div align="center">
-
-[![QQ群](https://img.shields.io/badge/QQ-4903FC?style=for-the-badge&logoColor=white)](https://qm.qq.com/q/EHHDtWjdFS)
-[![Downloads](https://img.shields.io/github/downloads/FCL-Team/FoldCraftLauncher/total?color=green&style=for-the-badge)]([https://qm.qq.com/q/EHHDtWjdFS](https://github.com/root-S7/FoldCraftLauncher/releases))
-[![Sponsor](https://img.shields.io/badge/sponsor-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://afdian.com/@tungs)
-
-</div>
 
 - 该启动器属于第三方分支，主要用于制作『直装整合包』并分发给用户。
 - 当用户下载好『制作后的APK』可直接一键安装游戏资源并启动游戏
