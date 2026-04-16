@@ -28,17 +28,13 @@ public class EulaFragment extends FCLFragment implements View.OnClickListener {
     private FCLTextView eula;
     private FCLButton next;
 
-    // 你的百度统计 AppKey 和渠道（建议定义成常量，或从配置文件读取）
-    private static final String BAIDU_APP_KEY = "你的实际AppKey";
-    private static final String BAIDU_CHANNEL = "official";
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_eula, container, false);
 
         // 初始化百度统计（确保只调用一次，可加标志判断）
-        StatService.init(requireContext(), BAIDU_APP_KEY, BAIDU_CHANNEL);
+        StatService.init(Context context, String appKey, String appChannel);
 
         progressBar = findViewById(view, R.id.progress);
         eula = findViewById(view, R.id.eula);
@@ -77,8 +73,8 @@ public class EulaFragment extends FCLFragment implements View.OnClickListener {
                 SharedPreferences.Editor editor = sharedPreferences.edit();
                 editor.putBoolean("isFirstLaunch", false);
                 // 百度统计：开始会话并授权
-                StatService.start();
-                StatService.setAuthorizedState(getActivity(), true);
+                StatService.start(this);
+                StatService.setAuthorizedState(Context context,boolean false)
                 editor.apply();
                 ((SplashActivity) getActivity()).start();
             }
