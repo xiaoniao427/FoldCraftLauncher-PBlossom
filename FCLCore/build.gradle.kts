@@ -50,4 +50,6 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.jsoup)
+    implementation("com.umeng.umsdk:common:9.4.4")
+    implementation("com.umeng.umsdk:asms:1.4.1")
 }
