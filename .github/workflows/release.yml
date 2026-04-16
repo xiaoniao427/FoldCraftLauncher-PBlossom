@@ -1,13 +1,13 @@
 name: Android Build and Draft Release
 
 on:
-  workflow_dispatch:   # 仅允许手动触发
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # 允许创建发行版和上传附件
+      contents: write
 
     steps:
       - name: Checkout code
@@ -27,22 +27,42 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Create local.properties (dummy)
+      # 创建 local.properties（占位符）
+      - name: Create local.properties
         run: |
           echo "key-store-password=ignored" > local.properties
           echo "curse-api-key=dummy" >> local.properties
           echo "oauth-api-key=dummy" >> local.properties
           echo "arch=all" >> local.properties
 
-      - name: Build Debug APK
-        run: ./gradlew :FCL:assembleDebug
+      # 从 GitHub Secrets 中恢复自定义 keystore
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > mykey.jks
+          # 将 mykey.jks 移动到项目根目录的上级（如果签名配置使用 file("../mykey.jks")）
+          # 如果项目中直接使用 file("mykey.jks")，则删除下面这行
+          mv mykey.jks ../mykey.jks || true
 
-      - name: Upload APK as artifact (for debugging)
+      # 配置签名参数到 gradle.properties
+      - name: Setup signing config
+        run: |
+          echo "RELEASE_STORE_FILE=../mykey.jks" >> gradle.properties
+          echo "RELEASE_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> gradle.properties
+          echo "RELEASE_KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> gradle.properties
+          echo "RELEASE_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> gradle.properties
+
+      # 构建已签名的 Release APK（使用自定义签名）
+      - name: Build Release APK
+        run: ./gradlew :FCL:assembleRelease
+
+      # 上传 APK 作为工作流产物（便于调试）
+      - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: FCL-Debug
-          path: FCL/build/outputs/apk/debug/*.apk
+          name: FCL-Signed
+          path: FCL/build/outputs/apk/release/*.apk
 
+      # 创建草稿发行版并附加 APK
       - name: Create Draft Release
         id: create_release
         uses: softprops/action-gh-release@v2
@@ -56,6 +76,6 @@ jobs:
           draft: true
           prerelease: true
           files: |
-            FCL/build/outputs/apk/debug/*.apk
+            FCL/build/outputs/apk/release/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
