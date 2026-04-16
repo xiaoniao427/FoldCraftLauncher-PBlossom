@@ -37,7 +37,7 @@ public class EulaFragment extends FCLFragment implements View.OnClickListener {
         View view = inflater.inflate(R.layout.fragment_eula, container, false);
 
         // ✅ 正确的初始化调用：传入实际参数
-        StatService.init(context, appKey, appChannel)
+        StatService.init(context, appKey, appChannel);
 
         progressBar = findViewById(view, R.id.progress);
         eula = findViewById(view, R.id.eula);
