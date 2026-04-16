@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-// import com.baidu.mobstat.StatService;           // 导入百度统计
 import com.tungsten.fcl.R;
 import com.tungsten.fcl.activity.SplashActivity;
 import com.tungsten.fclcore.util.io.IOUtils;
@@ -19,6 +18,7 @@ import com.tungsten.fcllibrary.component.FCLFragment;
 import com.tungsten.fcllibrary.component.view.FCLButton;
 import com.tungsten.fcllibrary.component.view.FCLProgressBar;
 import com.tungsten.fcllibrary.component.view.FCLTextView;
+import com.umeng.commonsdk.UMConfigure;
 
 import java.io.IOException;
 
@@ -32,9 +32,6 @@ public class EulaFragment extends FCLFragment implements View.OnClickListener {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_eula, container, false);
-
-        // 初始化百度统计（确保只调用一次，可加标志判断）
-        // StatService.init(Context context, String appKey, String appChannel);
 
         progressBar = findViewById(view, R.id.progress);
         eula = findViewById(view, R.id.eula);
@@ -69,12 +66,23 @@ public class EulaFragment extends FCLFragment implements View.OnClickListener {
     public void onClick(View view) {
         if (view == next) {
             if (getActivity() != null) {
+                // 用户同意 EULA，进行友盟统计的正式初始化
+                // 注意：AppKey 和 Channel 可以从 Manifest 读取，或直接传入
+                // 此处假设已在 AndroidManifest.xml 中配置了 UMENG_APPKEY 和 UMENG_CHANNEL
+                // 如果未配置，需要显式传入 AppKey 和 Channel
+                UMConfigure.init(
+                    requireActivity(),
+                    null,          // 如果 Manifest 中有 UMENG_APPKEY，可传 null
+                    null,          // 如果 Manifest 中有 UMENG_CHANNEL，可传 null
+                    UMConfigure.DEVICE_TYPE_PHONE,
+                    null
+                );
+                // 可选：开启调试日志（正式发布时建议关闭）
+                UMConfigure.setLogEnabled(true);
+
                 SharedPreferences sharedPreferences = getActivity().getSharedPreferences("launcher", MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
                 editor.putBoolean("isFirstLaunch", false);
-                // 百度统计：开始会话并授权
-                // StatService.start(this);
-                // StatService.setAuthorizedState(Context context,boolean false)
                 editor.apply();
                 ((SplashActivity) getActivity()).start();
             }
