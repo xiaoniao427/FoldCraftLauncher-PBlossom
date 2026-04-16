@@ -55,6 +55,7 @@
         android:usesCleartextTraffic="true"
         tools:ignore="DiscouragedApi"
         tools:targetApi="33">
+        
         <activity
             android:name=".activity.SplashActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|keyboard|navigation"
@@ -63,18 +64,18 @@
             android:theme="@style/Theme.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
-                
             </intent-filter>
         </activity>
-    <!-- 自定义小米手机卸载提示 -->
-    <meta-data
-        android:name="app_description_title"
-        android:resource="@string/miui_uninstall_title" />
-    <meta-data
-        android:name="app_description_content"
-        android:resource="@string/miui_uninstall_content" />
+
+        <!-- 自定义小米手机卸载提示 -->
+        <meta-data
+            android:name="app_description_title"
+            android:resource="@string/miui_uninstall_title" />
+        <meta-data
+            android:name="app_description_content"
+            android:resource="@string/miui_uninstall_content" />
+        
         <activity-alias
             android:name=".ImportActivity"
             android:exported="true"
@@ -82,10 +83,8 @@
             android:targetActivity=".activity.SplashActivity">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
-
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-
                 <data android:scheme="file" />
                 <data android:scheme="content" />
                 <data android:mimeType="application/zip" />
@@ -95,10 +94,8 @@
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
-
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-
                 <data android:scheme="file" />
                 <data android:scheme="content" />
                 <data android:host="*" />
@@ -107,10 +104,24 @@
                 <data android:pathPattern=".*\\.7z" />
             </intent-filter>
         </activity-alias>
+
         <activity
             android:name=".activity.MainActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|keyboard|navigation"
             android:screenOrientation="sensorLandscape" />
+
+        <!-- 友盟回调 Activity（合并添加） -->
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="um.69e0f1b36f259537c79a2e80" />
+            </intent-filter>
+        </activity>
+
         <activity
             android:name=".activity.WebActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|keyboard|navigation"
@@ -160,8 +171,7 @@
                 <action android:name="android.net.VpnService" />
             </intent-filter>
         </service>
-        
-        
+
         <provider
             android:name=".scoped.FolderProvider"
             android:authorities="${applicationId}.document.provider"
@@ -182,6 +192,7 @@
                 android:resource="@xml/provider_paths" />
         </provider>
     </application>
+
     <queries>
         <package android:name="net.kdt.pojavlaunch.ffmpeg" />
         <intent>
