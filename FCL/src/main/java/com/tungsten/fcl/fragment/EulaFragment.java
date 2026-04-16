@@ -11,7 +11,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.baidu.mobstat.StatService;           // 导入百度统计
+// import com.baidu.mobstat.StatService;           // 导入百度统计
 import com.tungsten.fcl.R;
 import com.tungsten.fcl.activity.SplashActivity;
 import com.tungsten.fclcore.util.io.IOUtils;
@@ -34,7 +34,7 @@ public class EulaFragment extends FCLFragment implements View.OnClickListener {
         View view = inflater.inflate(R.layout.fragment_eula, container, false);
 
         // 初始化百度统计（确保只调用一次，可加标志判断）
-        StatService.init(Context context, String appKey, String appChannel);
+        // StatService.init(Context context, String appKey, String appChannel);
 
         progressBar = findViewById(view, R.id.progress);
         eula = findViewById(view, R.id.eula);
@@ -73,8 +73,8 @@ public class EulaFragment extends FCLFragment implements View.OnClickListener {
                 SharedPreferences.Editor editor = sharedPreferences.edit();
                 editor.putBoolean("isFirstLaunch", false);
                 // 百度统计：开始会话并授权
-                StatService.start(this);
-                StatService.setAuthorizedState(Context context,boolean false)
+                // StatService.start(this);
+                // StatService.setAuthorizedState(Context context,boolean false)
                 editor.apply();
                 ((SplashActivity) getActivity()).start();
             }
