@@ -66,17 +66,15 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
                 
-        <!-- 专门为小米手机桌面卸载添加了提示，提升用户体验 -->
-        <meta-data
-            android:name="app_description_title"
-            android:resource="@string/miui_uninstall_title" />
-        <meta-data
-            android:name="app_description_content"
-            android:resource="@string/miui_uninstall_content" />
-                
             </intent-filter>
         </activity>
-
+    <!-- 自定义小米手机卸载提示 -->
+    <meta-data
+        android:name="app_description_title"
+        android:resource="@string/miui_uninstall_title" />
+    <meta-data
+        android:name="app_description_content"
+        android:resource="@string/miui_uninstall_content" />
         <activity-alias
             android:name=".ImportActivity"
             android:exported="true"
