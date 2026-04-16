@@ -26,9 +26,6 @@ import java.io.IOException;
 
 public class EulaFragment extends FCLFragment implements View.OnClickListener {
 
-    // 定义统计 SDK 的 AppKey 和渠道名（请替换为真实值）
-    private static final String STAT_APP_KEY = "2f0a0368f1";
-    private static final String STAT_APP_CHANNEL = "github"; // 例如 "official", "googleplay" 等
 
     private FCLProgressBar progressBar;
     private FCLTextView eula;
@@ -40,7 +37,7 @@ public class EulaFragment extends FCLFragment implements View.OnClickListener {
         View view = inflater.inflate(R.layout.fragment_eula, container, false);
 
         // ✅ 正确的初始化调用：传入实际参数
-        StatService.init(requireContext(), STAT_APP_KEY, STAT_APP_CHANNEL);
+        StatService.init(context, appKey, appChannel)
 
         progressBar = findViewById(view, R.id.progress);
         eula = findViewById(view, R.id.eula);
