@@ -66,19 +66,7 @@ public class EulaFragment extends FCLFragment implements View.OnClickListener {
     public void onClick(View view) {
         if (view == next) {
             if (getActivity() != null) {
-                // 用户同意 EULA，进行友盟正式初始化
-                // 注意：appkey 和 channel 必须与 Application 中 preInit 使用的保持一致
-                // 如果已在 AndroidManifest.xml 中配置，可以传 null；否则需显式传入相同值
-                UMConfigure.init(
-                    requireActivity(),
-                    null,          // 与 preInit 保持一致的 appkey，或 null（如果 Manifest 已配置）
-                    null,          // 与 preInit 保持一致的 channel，或 null（如果 Manifest 已配置）
-                    UMConfigure.DEVICE_TYPE_PHONE,
-                    null
-                );
-                // 可选：开启调试日志（正式发布时建议关闭）
-                // UMConfigure.setLogEnabled(true);
-                UMConfigure.init();
+            
 
                 SharedPreferences sharedPreferences = getActivity().getSharedPreferences("launcher", MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
