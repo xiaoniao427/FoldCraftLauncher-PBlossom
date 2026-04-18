@@ -93,6 +93,7 @@ import java.lang.ref.WeakReference
 import java.util.logging.Level
 import java.util.stream.Stream
 import kotlin.system.exitProcess
+import com.umeng.commonsdk.UMConfigure
 
 public static void preInit(Context context,String appkey,String channel)
 
