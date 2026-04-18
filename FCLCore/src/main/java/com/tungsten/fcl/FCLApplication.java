@@ -16,16 +16,18 @@ import java.lang.ref.WeakReference;
 public class FCLApplication extends Application implements Application.ActivityLifecycleCallbacks {
     private static WeakReference<Activity> currentActivity;
     private static Application INSTANCE;
-
+    private static final String UMENG_APPKEY = "69e0f1b36f259537c79a2e80";
+    private static final String UMENG_CHANNEL = "Github";
+    
     @Override
     public void onCreate() {
         // enabledStrictMode();
         super.onCreate();
 
-        // 友盟预初始化：不会采集设备信息，也不会向友盟后台上报数据
-        // preInit预初始化函数耗时极少，不会影响App首次冷启动用户体验
-        // 如果 Manifest 中配置了 UMENG_APPKEY 和 UMENG_CHANNEL，可传 null
-        UMConfigure.preInit(this, null, null);
+        // 友盟预初始化（合规要求：在 Application.onCreate 中调用，不采集数据）
+        // preInit 耗时极少，不会影响冷启动体验
+        UMConfigure.preInit(this, UMENG_APPKEY, UMENG_CHANNEL);
+        
 
         this.registerActivityLifecycleCallbacks(this);
 //        PerfUtil.install();
