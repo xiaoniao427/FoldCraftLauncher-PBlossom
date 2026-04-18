@@ -16,8 +16,8 @@ import java.lang.ref.WeakReference;
 public class FCLApplication extends Application implements Application.ActivityLifecycleCallbacks {
     private static WeakReference<Activity> currentActivity;
     private static Application INSTANCE;
-    private static final String UMENG_APPKEY = "69e0f1b36f259537c79a2e80";
-    private static final String UMENG_CHANNEL = "Github";
+    public static final String UMENG_APPKEY = "69e0f1b36f259537c79a2e80";   // 改为 public
+    public static final String UMENG_CHANNEL = "GitHub";
     
     @Override
     public void onCreate() {
