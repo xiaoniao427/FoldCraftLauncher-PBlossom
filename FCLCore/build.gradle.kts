@@ -1,31 +1,134 @@
+import com.android.build.api.variant.FilterConfiguration.FilterType.ABI
+import com.android.build.gradle.tasks.MergeSourceSetFolders
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Properties
 
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.20"
 }
 
 android {
-    namespace = "com.tungsten.fclcore"
+    namespace = "com.tungsten.fcl"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
-    defaultConfig {
-        minSdk = libs.versions.minSdk.get().toInt()
+    var localProperty: Properties? = null
+    if (file("${rootDir}/local.properties").exists()) {
+        localProperty = Properties()
+        file("${rootDir}/local.properties").inputStream().use { localProperty.load(it) }
+    }
+    val pwd = localProperty?.getProperty("key-store-password", "null")
+    val curseApiKey = localProperty?.getProperty("curse-api-key", "null")
+    val oauthApiKey = localProperty?.getProperty("oauth-api-key", "null")
+    if(localProperty != null && localProperty.getProperty("arch", "all") == "arm64") System.setProperty("arch", "arm64")
+
+    signingConfigs {
+        create("FCLKey") {
+            storeFile = file("../key-store.jks")
+            storePassword = pwd
+            keyAlias = "FCL-Key"
+            keyPassword = pwd
+        }
+        create("FCLDebugKey") {
+            storeFile = file("../debug-key.jks")
+            storePassword = "FCL-Debug"
+            keyAlias = "FCL-Debug"
+            keyPassword = "FCL-Debug"
+        }
     }
 
-    lint {
+    defaultConfig {
+        applicationId = "com.tungsten.fcl.server"
+        minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
+        versionCode = 1293
+        versionName = "1.2.9.3"
+    }
+
+    androidResources {
+        ignoreAssetsPattern = "<dir>_*:*~|!.*"
     }
 
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("FCLKey")
+        }
+        configureEach {
+            resValue("string", "app_version", defaultConfig.versionName.toString())
+            resValue("string", "curse_api_key", curseApiKey.toString())
+            resValue("string", "oauth_api_key", oauthApiKey.toString())
+        }
+    }
+
+    androidComponents {
+        onVariants { variant ->
+            variant.outputs.forEach { output ->
+                if (output is com.android.build.api.variant.impl.VariantOutputImpl) {
+                    (output.getFilter(ABI)?.identifier ?: "all").let { abi ->
+                        output.outputFileName =
+                            "FCL-${variant.buildType}-${defaultConfig.versionName}-${abi}.apk"
+                    }
+
+                    val variantName = variant.name.replaceFirstChar { it.uppercaseChar() }
+                    afterEvaluate {
+                        val task =
+                            tasks.named("merge${variantName}Assets").get() as MergeSourceSetFolders
+                        task.doLast {
+                            val arch = System.getProperty("arch", "all")
+                            val assetsDir = task.outputDir.get().asFile
+                            val jreList = listOf("jre8", "jre17", "jre21", "jre25")
+                            println("arch:$arch")
+                            jreList.forEach { jre ->
+                                val runtimeDir = "$assetsDir/app_runtime/java/$jre"
+                                println("runtimeDir:$runtimeDir")
+                                File(runtimeDir).listFiles().forEach {
+                                    if (arch != "all" && it.name != "version" && !it.name.contains("universal") && it.name != "bin-${arch}.tar.xz") {
+                                        println("delete:${it} : ${it.delete()}")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+            pickFirsts += listOf("**/libbytehook.so")
+        }
+    }
+
+    buildFeatures {
+        viewBinding = true
+        buildConfig = true
+    }
+
+    splits {
+        val arch = System.getProperty("arch", "all")
+        if (arch != "all") {
+            abi {
+                isEnable = true
+                reset()
+                when (arch) {
+                    "arm" -> include("armeabi-v7a")
+                    "arm64" -> include("arm64-v8a")
+                    "x86" -> include("x86")
+                    "x86_64" -> include("x86_64")
+                }
+            }
+        }
     }
 
     kotlin {
@@ -36,34 +139,26 @@ android {
 }
 
 dependencies {
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))
+    implementation(project(":FCLCore"))
+    implementation(project(":FCLLibrary"))
     implementation(project(":FCLauncher"))
-    implementation(project(":ZipFileSystem"))
+    implementation(project(":Terracotta"))
+    implementation(libs.taptargetview)
     implementation(libs.nanohttpd)
-    implementation(libs.opennbt)
-    implementation(libs.xz)
-    implementation(libs.commons.io)
-    implementation(libs.commons.lang3)
     implementation(libs.commons.compress)
-    implementation(libs.toml4j)
-    implementation(libs.constant.pool.scanner)
+    implementation(libs.xz)
+    implementation(libs.opennbt)
     implementation(libs.gson)
     implementation(libs.appcompat)
+    implementation(libs.core.splashscreen)
     implementation(libs.material)
-    implementation(libs.jsoup)
-
-    // 友盟统计 SDK（必选）
-    implementation("com.umeng.umsdk:common:+")
-    implementation("com.umeng.umsdk:asms:+")
-    implementation("com.umeng.umsdk:uyumao:+")   // 高级运营分析
-
-    // 友盟可选模块
-    implementation("com.umeng.umsdk:apm:+")       // APM 性能监控
-    implementation("com.umeng.umsdk:link:+")
-    implementation("com.umeng.umsdk:game:+")     // 游戏统计
-
-    // 友盟 Push（必须）
-    implementation("com.umeng.umsdk:push:+")
-
-    // 友盟分享核心组件
-    implementation("com.umeng.umsdk:share-core:+")
+    implementation(libs.constraintlayout)
+    implementation(libs.glide)
+    implementation(libs.touchcontroller)
+    implementation(libs.palette.ktx)
+    implementation(libs.gamepad.remapper)
+    implementation(libs.segmented.button)
+    implementation(libs.datastore)
+    implementation(libs.kotlinx.serialization.json)
 }
