@@ -18,6 +18,7 @@ import com.tungsten.fcllibrary.component.FCLFragment;
 import com.tungsten.fcllibrary.component.view.FCLButton;
 import com.tungsten.fcllibrary.component.view.FCLProgressBar;
 import com.tungsten.fcllibrary.component.view.FCLTextView;
+import com.tungsten.fcl.FCLApplication;   // 新增这一行
 import com.umeng.commonsdk.UMConfigure;
 
 import java.io.IOException;
