@@ -37,13 +37,11 @@ public class EulaFragment extends FCLFragment implements View.OnClickListener {
         progressBar = findViewById(view, R.id.progress);
         eula = findViewById(view, R.id.eula);
         next = findViewById(view, R.id.next);
+        UMConfigure.init(Context context,int deviceType,String pushSecret);
         next.setOnClickListener(this);
-        // 在用户点击“同意”后调用
-    UMConfigure.init(requireActivity(), 
-    FCLApplication.UMENG_APPKEY,   // 建议从 Application 的常量引用
-    FCLApplication.UMENG_CHANNEL,
-    UMConfigure.DEVICE_TYPE_PHONE,
-    null);
+        
+        UmInitConfig umInitConfig=new UmInitConfig();
+        umInitConfig.UMinit(getApplicationContext());
         
         loadEula();
 
