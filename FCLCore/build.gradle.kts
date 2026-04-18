@@ -50,6 +50,23 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.jsoup)
-    implementation("com.umeng.umsdk:common:9.4.4")
-    implementation("com.umeng.umsdk:asms:1.4.1")
+
+    // 友盟统计 SDK（必选）
+    implementation("com.umeng.umsdk:common:+")
+    implementation("com.umeng.umsdk:asms:+")
+    implementation("com.umeng.umsdk:uyumao:+")   // 高级运营分析
+
+    // 友盟可选模块
+    implementation("com.umeng.umsdk:apm:+")       // APM 性能监控
+    implementation("com.umeng.umsdk:link:+")
+    implementation("com.umeng.umsdk:game:+")     // 游戏统计
+
+    // 友盟 Push（必须）
+    implementation("com.umeng.umsdk:push:+")
+
+    // 友盟分享核心组件
+    implementation("com.umeng.umsdk:share-core:+")
+
+    // U-Share 依赖（注意：support-v4 可能与现有 AppCompat 冲突）
+    implementation("com.android.support:support-v4:25.0.0")
 }
