@@ -66,7 +66,4 @@ dependencies {
 
     // 友盟分享核心组件
     implementation("com.umeng.umsdk:share-core:+")
-
-    // U-Share 依赖（注意：support-v4 可能与现有 AppCompat 冲突）
-    implementation("com.android.support:support-v4:25.0.0")
 }
