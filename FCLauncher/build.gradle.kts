@@ -51,4 +51,20 @@ dependencies {
     implementation(libs.bytehook)
     implementation(libs.appcompat)
     implementation(libs.material)
+
+    // 友盟统计 SDK（必选）
+    implementation("com.umeng.umsdk:common:+")
+    implementation("com.umeng.umsdk:asms:+")
+    implementation("com.umeng.umsdk:uyumao:+")   // 高级运营分析
+
+    // 友盟可选模块
+    implementation("com.umeng.umsdk:apm:+")       // APM 性能监控
+    implementation("com.umeng.umsdk:link:+")
+    implementation("com.umeng.umsdk:game:+")     // 游戏统计
+
+    // 友盟 Push（必须）
+    implementation("com.umeng.umsdk:push:+")
+
+    // 友盟分享核心组件
+    implementation("com.umeng.umsdk:share-core:+")
 }
