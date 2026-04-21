@@ -30,7 +30,7 @@ import com.tungsten.fcl.setting.ConfigHolder
 import com.tungsten.fcl.util.AndroidUtils
 import com.tungsten.fcl.util.RuntimeUtils
 import com.tungsten.fclauncher.utils.FCLPath
-import com.tungsten.fclcore.FCLApplication
+import com.tungsten.fcl.FCLApplication
 import com.tungsten.fclcore.util.Logging
 import com.tungsten.fclcore.util.io.FileUtils
 import com.tungsten.fcllibrary.component.FCLActivity
