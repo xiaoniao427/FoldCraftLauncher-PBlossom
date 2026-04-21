@@ -93,9 +93,6 @@ import java.lang.ref.WeakReference
 import java.util.logging.Level
 import java.util.stream.Stream
 import kotlin.system.exitProcess
-import com.umeng.commonsdk.UMConfigure
-
-public static void preInit(Context context,String appkey,String channel)
 
 class MainActivity : FCLActivity(), OnSelectListener, View.OnClickListener {
     companion object {
@@ -125,8 +122,6 @@ class MainActivity : FCLActivity(), OnSelectListener, View.OnClickListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // 友盟预初始化（注意：官方推荐在 Application.onCreate 中调用）
-        UMConfigure.preInit(this, "69e0f1b36f259537c79a2e80", "GitHub")
         
         modpackHandled = savedInstanceState?.getBoolean("modpack_handled") ?: false
         instance = WeakReference(this)
