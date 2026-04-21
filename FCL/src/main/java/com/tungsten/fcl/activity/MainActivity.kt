@@ -122,7 +122,6 @@ class MainActivity : FCLActivity(), OnSelectListener, View.OnClickListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
         modpackHandled = savedInstanceState?.getBoolean("modpack_handled") ?: false
         instance = WeakReference(this)
         binding = ActivityMainBinding.inflate(layoutInflater)
