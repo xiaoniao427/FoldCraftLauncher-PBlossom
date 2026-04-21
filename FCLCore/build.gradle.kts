@@ -33,22 +33,21 @@ android {
             jvmTarget.set(JvmTarget.JVM_17)
         }
     }
-
-    buildFeatures {
-        viewBinding = true
-    }
 }
 
 dependencies {
     implementation(project(":FCLauncher"))
-    implementation(libs.gson)
-    implementation(libs.opennbt)
+    implementation(project(":ZipFileSystem"))
     implementation(libs.nanohttpd)
-    implementation(libs.commons.compress)
+    implementation(libs.opennbt)
     implementation(libs.xz)
     implementation(libs.commons.io)
+    implementation(libs.commons.lang3)
+    implementation(libs.commons.compress)
     implementation(libs.toml4j)
-    implementation(libs.jsoup)
     implementation(libs.constant.pool.scanner)
+    implementation(libs.gson)
     implementation(libs.appcompat)
+    implementation(libs.material)
+    implementation(libs.jsoup)
 }
