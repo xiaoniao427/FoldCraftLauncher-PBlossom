@@ -12,6 +12,7 @@ import com.tungsten.fclauncher.utils.FCLPath;
 import com.umeng.analytics.MobclickAgent;
 import com.umeng.commonsdk.UMConfigure;
 import com.umeng.message.PushAgent;
+import com.umeng.message.UPushSettingCallback; // 导入回调接口
 
 import java.lang.ref.WeakReference;
 
@@ -49,9 +50,18 @@ public class FCLApplication extends Application implements Application.ActivityL
             MobclickAgent.onPageStart("SplashActivity");
             MobclickAgent.onEvent(this, "app_launch");
             
-            // 推送服务初始化
+            // 推送服务初始化 - 添加回调
             PushAgent mPushAgent = PushAgent.getInstance(this);
-            mPushAgent.enable();
+            mPushAgent.enable(new UPushSettingCallback() {
+                @Override
+                public void onSuccess() {
+                    // 推送服务开启成功
+                }
+                @Override
+                public void onFailure(String code, String message) {
+                    // 推送服务开启失败
+                }
+            });
             mPushAgent.setDebugMode(true);
             
             umengInitialized = true;
@@ -72,8 +82,17 @@ public class FCLApplication extends Application implements Application.ActivityL
             // 正式初始化统计分析
             MobclickAgent.onPageStart("MainActivity");
             
-            // 推送服务正式启用
-            PushAgent.getInstance(INSTANCE()).enable();
+            // 推送服务正式启用 - 添加回调
+            PushAgent.getInstance(INSTANCE()).enable(new UPushSettingCallback() {
+                @Override
+                public void onSuccess() {
+                    // 推送服务开启成功
+                }
+                @Override
+                public void onFailure(String code, String message) {
+                    // 推送服务开启失败
+                }
+            });
             
             umengInitialized = true;
         } catch (Exception e) {
