@@ -4,12 +4,10 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Typeface;
-import android.os.Build;
 import android.text.Spanned;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ScrollView;
 
@@ -83,28 +81,7 @@ public class FCLAlertDialog extends FCLDialog implements View.OnClickListener {
 
     private void checkHeight() {
         parent.post(() -> message.post(() -> {
-            // 防御：如果 Dialog 已经不再显示或 Activity 已销毁，直接返回
-            if (!isShowing()) {
-                return;
-            }
-            if (getOwnerActivity() != null) {
-                if (getOwnerActivity().isFinishing()) {
-                    return;
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && getOwnerActivity().isDestroyed()) {
-                    return;
-                }
-            }
-            Window window = getWindow();
-            if (window == null) {
-                return;
-            }
-            // 可选：检查 DecorView 是否仍然 attached
-            if (window.getDecorView() == null || !window.getDecorView().isAttachedToWindow()) {
-                return;
-            }
-
-            WindowManager wm = window.getWindowManager();
+            WindowManager wm = getWindow().getWindowManager();
             Point point = new Point();
             wm.getDefaultDisplay().getSize(point);
             if (widthPercentage > 0.22f || heightPercentage > 0.22f) {
@@ -119,29 +96,16 @@ public class FCLAlertDialog extends FCLDialog implements View.OnClickListener {
                     scrollView.setLayoutParams(layoutParams);
                 }
 
-                try {
-                    window.setLayout(dialogWidth, dialogHeight);
-                } catch (IllegalArgumentException e) {
-                    // View not attached to window manager, ignore
-                    e.printStackTrace();
-                }
+                getWindow().setLayout(dialogWidth, dialogHeight);
             } else {
                 int maxHeight = point.y - ConvertUtils.dip2px(getContext(), 30);
                 if (parent.getMeasuredHeight() < maxHeight) {
                     ViewGroup.LayoutParams layoutParams = scrollView.getLayoutParams();
                     layoutParams.height = message.getMeasuredHeight();
                     scrollView.setLayoutParams(layoutParams);
-                    try {
-                        window.setLayout(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT);
-                    } catch (IllegalArgumentException e) {
-                        e.printStackTrace();
-                    }
+                    getWindow().setLayout(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT);
                 } else {
-                    try {
-                        window.setLayout(WindowManager.LayoutParams.WRAP_CONTENT, maxHeight);
-                    } catch (IllegalArgumentException e) {
-                        e.printStackTrace();
-                    }
+                    getWindow().setLayout(WindowManager.LayoutParams.WRAP_CONTENT, maxHeight);
                 }
             }
         }));

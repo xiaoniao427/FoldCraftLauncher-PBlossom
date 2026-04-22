@@ -9,12 +9,16 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.tungsten.fclauncher.utils.FCLPath;
+import com.umeng.analytics.MobclickAgent;
+import com.umeng.commonsdk.UMConfigure;
+import com.umeng.message.PushAgent;
 
 import java.lang.ref.WeakReference;
 
 public class FCLApplication extends Application implements Application.ActivityLifecycleCallbacks {
     private static WeakReference<Activity> currentActivity;
     private static Application INSTANCE;
+    private static boolean umengInitialized = false;
 
     @Override
     public void onCreate() {
@@ -24,6 +28,57 @@ public class FCLApplication extends Application implements Application.ActivityL
 //        PerfUtil.install();
         FCLPath.loadPaths(getApplicationContext());
         INSTANCE = this;
+        
+        // Umeng 预初始化
+        initializeUmeng();
+    }
+    
+    /**
+     * 初始化友盟统计和推送
+     */
+    private void initializeUmeng() {
+        try {
+            String appKey = "69e0f1b36f259537c79a2e80";
+            String channel = "GitHub";
+            
+            // 统计分析初始化
+            UMConfigure.init(this, appKey, channel, UMConfigure.DEVICE_TYPE_PHONE, "Umeng");
+            UMConfigure.setLogEnabled(true);
+            
+            // 正式初始化
+            MobclickAgent.onPageStart("SplashActivity");
+            MobclickAgent.onEvent(this, "app_launch");
+            
+            // 推送服务初始化
+            PushAgent mPushAgent = PushAgent.getInstance(this);
+            mPushAgent.enable();
+            mPushAgent.setDebugMode(true);
+            
+            umengInitialized = true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * 用户同意隐私协议后调用此方法进行正式初始化
+     */
+    public static void onUserConsent() {
+        if (umengInitialized) {
+            return;
+        }
+        
+        try {
+            // 正式初始化统计分析
+            MobclickAgent.onPageStart("MainActivity");
+            
+            // 推送服务正式启用
+            PushAgent.getInstance(INSTANCE()).enable();
+            
+            umengInitialized = true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static Activity getCurrentActivity() {

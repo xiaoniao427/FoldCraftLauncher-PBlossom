@@ -57,7 +57,7 @@ public class AboutPage extends FCLCommonPage implements View.OnClickListener {
             url = "https://fcl-team.github.io/";
         }
         if (v == developer) {
-            url = "https://github.com/xiaoniao427";
+            url = "https://github.com/root-S7";
         }
         if (v == discord) {
             url = GENERAL_SETTING.getProperty("discord-url", null);
@@ -66,10 +66,10 @@ public class AboutPage extends FCLCommonPage implements View.OnClickListener {
             joinQQGroup(QQ_GROUP_KEY);
         }
         if (v == sponsor) {
-            url = "https://afdian.com/@tzhd427";
+            url = "https://afdian.com/@tungs";
         }
         if (v == source) {
-            url = "https://github.com/xiaoniao427/FoldCraftLauncher-PBlossom/";
+            url = "https://github.com/root-S7/FoldCraftLauncher";
         }
 
         if (url != null) {

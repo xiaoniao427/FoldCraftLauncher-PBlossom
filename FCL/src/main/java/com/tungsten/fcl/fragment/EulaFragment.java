@@ -18,8 +18,6 @@ import com.tungsten.fcllibrary.component.FCLFragment;
 import com.tungsten.fcllibrary.component.view.FCLButton;
 import com.tungsten.fcllibrary.component.view.FCLProgressBar;
 import com.tungsten.fcllibrary.component.view.FCLTextView;
-import com.tungsten.fcl.FCLApplication;
-import com.umeng.commonsdk.UMConfigure;
 
 import java.io.IOException;
 
@@ -36,6 +34,7 @@ public class EulaFragment extends FCLFragment implements View.OnClickListener {
 
         progressBar = findViewById(view, R.id.progress);
         eula = findViewById(view, R.id.eula);
+
         next = findViewById(view, R.id.next);
         next.setOnClickListener(this);
 
@@ -67,13 +66,6 @@ public class EulaFragment extends FCLFragment implements View.OnClickListener {
     public void onClick(View view) {
         if (view == next) {
             if (getActivity() != null) {
-                // 用户同意 EULA 后，正式初始化友盟 SDK（合规要求：用户同意后才采集数据）
-                UMConfigure.init(getActivity(),
-                        FCLApplication.UMENG_APPKEY,
-                        FCLApplication.UMENG_CHANNEL,
-                        UMConfigure.DEVICE_TYPE_PHONE,
-                        "");
-
                 SharedPreferences sharedPreferences = getActivity().getSharedPreferences("launcher", MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
                 editor.putBoolean("isFirstLaunch", false);

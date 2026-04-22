@@ -53,6 +53,7 @@ android {
 }
 
 dependencies {
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))
     implementation(libs.bytehook)
     implementation(libs.appcompat)
     implementation(libs.material)

@@ -30,14 +30,12 @@ import com.tungsten.fcl.setting.ConfigHolder
 import com.tungsten.fcl.util.AndroidUtils
 import com.tungsten.fcl.util.RuntimeUtils
 import com.tungsten.fclauncher.utils.FCLPath
-import com.tungsten.fcl.FCLApplication
 import com.tungsten.fclcore.util.Logging
 import com.tungsten.fclcore.util.io.FileUtils
 import com.tungsten.fcllibrary.component.FCLActivity
 import com.tungsten.fcllibrary.component.dialog.FCLAlertDialog
 import com.tungsten.fcllibrary.component.theme.ThemeEngine
 import com.tungsten.fcllibrary.util.LocaleUtils
-import com.umeng.commonsdk.UMConfigure
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -99,14 +97,6 @@ class SplashActivity : FCLActivity() {
                 setMessage(getString(R.string.splash_agreement))
                 setPositiveButton {
                     sharedPreferences.edit { putBoolean("isAgree", true) }
-                    // 用户同意隐私协议后，正式初始化友盟 SDK
-                    UMConfigure.init(
-                        this@SplashActivity,
-                        FCLApplication.UMENG_APPKEY,
-                        FCLApplication.UMENG_CHANNEL,
-                        UMConfigure.DEVICE_TYPE_PHONE,
-                        ""
-                    )
                     checkPermission()
                 }
                 setNegativeButton(getString(com.tungsten.fcllibrary.R.string.crash_reporter_close)) { finish() }
@@ -149,8 +139,7 @@ class SplashActivity : FCLActivity() {
         if (sharedPreferences.getBoolean("isFirstLaunch", true)) {
             supportFragmentManager.beginTransaction()
                 .setCustomAnimations(R.anim.frag_start_anim, R.anim.frag_stop_anim)
-                .replace(R.id.fragment, EulaFragment(), null)   // 修改为 fragment
-                .commit()
+                .replace(R.id.fragment, EulaFragment::class.java, null).commit()
         } else {
             lifecycleScope.launch {
                 val waitDialog = FCLWaitDialog.Builder(this@SplashActivity)
@@ -165,9 +154,8 @@ class SplashActivity : FCLActivity() {
                     waitDialog?.dismiss()
                     supportFragmentManager.beginTransaction()
                         .setCustomAnimations(R.anim.frag_start_anim, R.anim.frag_stop_anim)
-                        .replace(R.id.fragment, RuntimeFragment::class.java, null)
-                        .commit()
-                } catch(e: Exception) {
+                        .replace(R.id.fragment, RuntimeFragment::class.java, null).commit()
+                }catch(e: Exception) {
                     waitDialog?.dismiss()
                     showErrorDialog(this@SplashActivity, e.message, false)
                 }
@@ -254,7 +242,7 @@ class SplashActivity : FCLActivity() {
     }
 
     private fun hasPermission(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION.R) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             return Environment.isExternalStorageManager()
         }
         return ContextCompat.checkSelfPermission(
