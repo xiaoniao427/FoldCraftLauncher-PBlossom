@@ -4,6 +4,11 @@
 
 <h1 align="center">Fold Craft Launcher —— 整合包版</h1>
 
+<div align="center">
+
+[友盟统计相关修改](Umeng_Integration_Summary.md)
+
+</div>
 
 - 该启动器属于第三方分支，主要用于制作『直装整合包』并分发给用户。
 - 当用户下载好『制作后的APK』可直接一键安装游戏资源并启动游戏
