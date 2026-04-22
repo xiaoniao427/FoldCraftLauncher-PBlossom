@@ -5,12 +5,7 @@
 ### 已完成的工作
 
 #### 1. 添加SDK依赖 (FCL/build.gradle.kts)
-```kotlin
-// Umeng Analytics & Push
-implementation("com.umeng.umsdk:common:9.6.5")
-implementation("com.umeng.umsdk:analytics:9.6.5")
-implementation("com.umeng.umsdk:push:6.4.2")
-```
+
 
 #### 2. 集成到FCLApplication (FCLApplication.java)
 - ✅ 添加友盟SDK导入
@@ -74,11 +69,6 @@ MobclickAgent.onPageStart("MainActivity");
 PushAgent.getInstance(INSTANCE()).enable();
 ```
 
-### 依赖版本说明
-
-- **common**: 9.6.5 (基础SDK)
-- **analytics**: 9.6.5 (统计分析)
-- **push**: 6.4.2 (消息推送)
 
 ### 常见问题排查
 

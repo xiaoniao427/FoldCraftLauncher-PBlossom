@@ -166,9 +166,4 @@ dependencies {
     implementation(libs.segmented.button)
     implementation(libs.datastore)
     implementation(libs.kotlinx.serialization.json)
-    
-    // Umeng Analytics & Push
-    implementation("com.umeng.umsdk:common:9.6.5")
-    implementation("com.umeng.umsdk:analytics:9.6.5")
-    implementation("com.umeng.umsdk:push:6.4.2")
 }
