@@ -11,7 +11,6 @@ import androidx.annotation.Nullable;
 import com.tungsten.fclauncher.utils.FCLPath;
 import com.umeng.analytics.MobclickAgent;
 import com.umeng.commonsdk.UMConfigure;
-import com.umeng.message.PushAgent;
 
 import java.lang.ref.WeakReference;
 
@@ -29,12 +28,13 @@ public class FCLApplication extends Application implements Application.ActivityL
         FCLPath.loadPaths(getApplicationContext());
         INSTANCE = this;
         
-        // Umeng 预初始化
+        // 友盟预初始化
         initializeUmeng();
     }
     
     /**
      * 初始化友盟统计和推送
+     * 遵循友盟官方文档推荐流程：预初始化 -> 用户同意隐私协议 -> 正式初始化
      */
     private void initializeUmeng() {
         try {
@@ -45,14 +45,25 @@ public class FCLApplication extends Application implements Application.ActivityL
             UMConfigure.init(this, appKey, channel, UMConfigure.DEVICE_TYPE_PHONE, "Umeng");
             UMConfigure.setLogEnabled(true);
             
-            // 正式初始化
+            // 推送服务预初始化
+            PushHelper.preInit(this);
+            
+            // 统计分析页面统计
             MobclickAgent.onPageStart("SplashActivity");
             MobclickAgent.onEvent(this, "app_launch");
             
-            // 推送服务初始化
-            PushAgent mPushAgent = PushAgent.getInstance(this);
-            mPushAgent.enable();
-            mPushAgent.setDebugMode(true);
+            // 注册推送服务
+            PushAgent.getInstance(this).register(new com.umeng.message.UPushRegisterCallback() {
+                @Override
+                public void onSuccess(String deviceToken) {
+                    android.util.Log.i("Umeng", "推送注册成功，deviceToken: " + deviceToken);
+                }
+
+                @Override
+                public void onFailure(String errCode, String errDesc) {
+                    android.util.Log.e("Umeng", "推送注册失败: " + "code:" + errCode + ", desc:" + errDesc);
+                }
+            });
             
             umengInitialized = true;
         } catch (Exception e) {
@@ -62,6 +73,7 @@ public class FCLApplication extends Application implements Application.ActivityL
     
     /**
      * 用户同意隐私协议后调用此方法进行正式初始化
+     * 必须在用户同意隐私政策后才调用
      */
     public static void onUserConsent() {
         if (umengInitialized) {
@@ -69,11 +81,11 @@ public class FCLApplication extends Application implements Application.ActivityL
         }
         
         try {
-            // 正式初始化统计分析
+            // 统计分析页面统计
             MobclickAgent.onPageStart("MainActivity");
             
-            // 推送服务正式启用
-            PushAgent.getInstance(INSTANCE()).enable();
+            // 推送服务正式初始化
+            PushHelper.init(INSTANCE());
             
             umengInitialized = true;
         } catch (Exception e) {

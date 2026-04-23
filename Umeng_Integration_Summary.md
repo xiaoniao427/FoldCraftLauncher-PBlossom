@@ -5,13 +5,25 @@
 ### 已完成的工作
 
 #### 1. 添加SDK依赖 (FCL/build.gradle.kts)
+```kotlin
+// Umeng Analytics & Push
+implementation("com.umeng.umsdk:common:9.6.5")
+implementation("com.umeng.umsdk:analytics:9.6.5")
+implementation("com.umeng.umsdk:push:6.4.2")
+```
 
+#### 2. 创建PushHelper工具类 (PushHelper.java)
+- ✅ 实现预初始化方法 `PushHelper.preInit()`
+- ✅ 实现正式初始化方法 `PushHelper.init()`
+- ✅ 实现应用活跃统计方法 `PushHelper.onAppStart()`
+- ✅ 实现deviceToken回调处理
+- ✅ 添加主进程检查逻辑
+- ✅ 完善异常处理和日志记录
 
-#### 2. 集成到FCLApplication (FCLApplication.java)
-- ✅ 添加友盟SDK导入
+#### 3. 集成到FCLApplication (FCLApplication.java)
 - ✅ 在`onCreate()`中预初始化友盟
 - ✅ 实现统计分析初始化
-- ✅ 实现推送服务初始化
+- ✅ 使用PushHelper进行推送服务初始化
 - ✅ 提供`onUserConsent()`方法供隐私协议同意后调用
 
 ### 关键配置信息
@@ -21,6 +33,7 @@
 - **安装渠道**: GitHub
 - **预初始化时机**: Application.onCreate()
 - **正式初始化时机**: 用户同意隐私协议后
+- **应用活跃统计时机**: SplashActivity/MainActivity.onCreate()
 
 ### 下一步操作
 
@@ -31,12 +44,22 @@
 FCLApplication.onUserConsent();
 ```
 
-#### 2. 需要手动测试
+#### 2. 在启动Activity中添加应用活跃统计
+
+在`SplashActivity.kt`的`onCreate()`方法中添加：
+```java
+if (hasAgreedPrivacyPolicy) {
+    PushHelper.onAppStart(this);
+}
+```
+
+#### 3. 需要手动测试
 
 1. 同步Gradle项目：`./gradlew sync`
 2. 编译APK并安装
 3. 测试应用启动时的日志输出
 4. 验证友盟控制台是否收到数据
+5. 检查deviceToken是否正确获取
 
 ### 注意事项
 
@@ -45,6 +68,7 @@ FCLApplication.onUserConsent();
 2. **调试模式**：当前推送服务设置为`setDebugMode(true)`，发布前需改为`false`
 3. **权限检查**：AndroidManifest中已包含`INTERNET`、`POST_NOTIFICATIONS`等必要权限
 4. **AppKey配置**：统计分析AppKey在代码中硬编码，建议使用BuildConfig管理
+5. **推送服务必须同时注册**：主进程和子进程(:channel)都需要调用注册接口
 
 ### 友盟控制台验证
 
@@ -52,23 +76,65 @@ FCLApplication.onUserConsent();
 1. 检查统计数据是否正常上报
 2. 验证推送服务配置是否正确
 3. 确认安装渠道标记为"GitHub"
+4. 查看deviceToken是否正确注册
 
 ### 技术实现细节
 
-#### 预初始化流程 (onCreate)
+#### 完整初始化流程 (遵循官方文档)
+
+**步骤1: 预初始化 (Application.onCreate)**
 ```java
+// 统计分析初始化
 UMConfigure.init(this, appKey, channel, UMConfigure.DEVICE_TYPE_PHONE, "Umeng");
+UMConfigure.setLogEnabled(true);
+
+// 推送服务预初始化
+PushHelper.preInit(this);
+
+// 统计分析页面统计
 MobclickAgent.onPageStart("SplashActivity");
 MobclickAgent.onEvent(this, "app_launch");
-PushAgent.getInstance(this).enable();
 ```
 
-#### 正式初始化流程 (onUserConsent)
+**步骤2: 正式初始化 (用户同意隐私协议后)**
 ```java
+// 统计分析页面统计
 MobclickAgent.onPageStart("MainActivity");
-PushAgent.getInstance(INSTANCE()).enable();
+
+// 推送服务正式初始化
+PushHelper.init(INSTANCE());
 ```
 
+**步骤3: 应用活跃统计 (SplashActivity/MainActivity.onCreate)**
+```java
+if (hasAgreedPrivacyPolicy) {
+    PushHelper.onAppStart(this);
+}
+```
+
+### PushHelper 工具类功能说明
+
+#### 1. preInit() - 预初始化
+- 必须在Application的onCreate中调用
+- 提前加载SDK资源，提升启动速度
+- 设置日志开关
+
+#### 2. init() - 正式初始化
+- 在用户同意隐私政策后调用
+- 注册推送服务，获取deviceToken
+- 设置消息处理回调
+- 支持主进程和子进程区分处理
+
+#### 3. onAppStart() - 应用活跃统计
+- 必须在SplashActivity或MainActivity的onCreate中调用
+- 用于推送平台多维度推送决策
+- 必须在用户同意隐私政策后调用
+
+### 依赖版本说明
+
+- **common**: 9.6.5 (基础SDK)
+- **analytics**: 9.6.5 (统计分析)
+- **push**: 6.4.2 (消息推送)
 
 ### 常见问题排查
 
@@ -76,19 +142,27 @@ PushAgent.getInstance(INSTANCE()).enable();
    - 检查网络权限是否正常
    - 确认AppKey是否正确
    - 查看Logcat中是否有友盟日志输出
+   - 检查统计分析是否正常初始化
 
 2. **推送无法接收**：
    - 确保设备上已授予`POST_NOTIFICATIONS`权限
    - 验证推送服务是否正常启动
    - 检查友盟控制台的应用状态
+   - 确认deviceToken是否正确获取
 
 3. **编译错误**：
    - 执行`./gradlew clean`
    - 同步Gradle项目
    - 检查网络连接是否正常（下载依赖）
 
+4. **deviceToken未获取**：
+   - 检查是否正确调用了`PushHelper.init()`
+   - 确认应用已获得推送权限
+   - 查看Logcat中的注册日志
+
 ---
 
 **集成完成时间**: 2025-06-23
 **集成版本**: FoldCraftLauncher-PBlossom v1.2.9.8.2
 **集成方式**: 手动代码集成
+**参考文档**: https://developer.umeng.com/docs/67966/detail/98585
