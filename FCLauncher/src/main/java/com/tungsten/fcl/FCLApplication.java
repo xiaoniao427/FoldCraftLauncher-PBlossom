@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -11,6 +12,7 @@ import androidx.annotation.Nullable;
 import com.tungsten.fclauncher.utils.FCLPath;
 import com.umeng.analytics.MobclickAgent;
 import com.umeng.commonsdk.UMConfigure;
+import com.umeng.message.PushAgent;
 
 import java.lang.ref.WeakReference;
 
@@ -45,25 +47,13 @@ public class FCLApplication extends Application implements Application.ActivityL
             UMConfigure.init(this, appKey, channel, UMConfigure.DEVICE_TYPE_PHONE, "Umeng");
             UMConfigure.setLogEnabled(true);
             
-            // 推送服务预初始化
-            PushHelper.preInit(this);
-            
             // 统计分析页面统计
             MobclickAgent.onPageStart("SplashActivity");
             MobclickAgent.onEvent(this, "app_launch");
             
-            // 注册推送服务
-            PushAgent.getInstance(this).register(new com.umeng.message.UPushRegisterCallback() {
-                @Override
-                public void onSuccess(String deviceToken) {
-                    android.util.Log.i("Umeng", "推送注册成功，deviceToken: " + deviceToken);
-                }
-
-                @Override
-                public void onFailure(String errCode, String errDesc) {
-                    android.util.Log.e("Umeng", "推送注册失败: " + "code:" + errCode + ", desc:" + errDesc);
-                }
-            });
+            // 推送服务初始化（简化版本）
+            PushAgent.getInstance(this).enable();
+            PushAgent.getInstance(this).setDebugMode(true);
             
             umengInitialized = true;
         } catch (Exception e) {
@@ -84,8 +74,8 @@ public class FCLApplication extends Application implements Application.ActivityL
             // 统计分析页面统计
             MobclickAgent.onPageStart("MainActivity");
             
-            // 推送服务正式初始化
-            PushHelper.init(INSTANCE());
+            // 推送服务正式启用
+            PushAgent.getInstance(INSTANCE()).enable();
             
             umengInitialized = true;
         } catch (Exception e) {
