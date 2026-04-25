@@ -1,4 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    
+    <application>
+        <!-- 添加必要权限 -->
+        <uses-permission android:name="android.permission.INTERNET" />
+        <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+        <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+        <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+        
+        <!-- 添加友盟推送服务 -->
+        <service
+            android:name="com.umeng.message.UmengMessageIntentService"
+            android:exported="false" />
+            
+        <receiver
+            android:name="com.umeng.message.UmengMessageReceiver"
+            android:exported="true"
+            android:process=":channel">
+            <intent-filter>
+                <action android:name="org.android.agoo.client.MessageReceiverService" />
+            </intent-filter>
+        </receiver>
+        
+    </application>
+    
 </manifest>

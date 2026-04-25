@@ -13,6 +13,7 @@ import com.tungsten.fclauncher.utils.FCLPath;
 import com.umeng.analytics.MobclickAgent;
 import com.umeng.commonsdk.UMConfigure;
 import com.umeng.message.PushAgent;
+import com.umeng.message.IUmengRegisterCallback;
 
 import java.lang.ref.WeakReference;
 
@@ -51,8 +52,19 @@ public class FCLApplication extends Application implements Application.ActivityL
             MobclickAgent.onPageStart("SplashActivity");
             MobclickAgent.onEvent(this, "app_launch");
             
-            // 推送服务初始化（简化版本）
-            PushAgent.getInstance(this).enable();
+            // 推送服务初始化（使用回调接口）
+            // 使用正确的推送初始化API
+            PushAgent.getInstance(this).register(new com.umeng.message.IUmengRegisterCallback() {
+                @Override
+                public void onSuccess(String deviceToken) {
+                    // 注册成功
+                }
+
+                @Override
+                public void onFailure(String s, String s1) {
+                    // 注册失败
+                }
+            });
             PushAgent.getInstance(this).setDebugMode(true);
             
             umengInitialized = true;
@@ -75,7 +87,17 @@ public class FCLApplication extends Application implements Application.ActivityL
             MobclickAgent.onPageStart("MainActivity");
             
             // 推送服务正式启用
-            PushAgent.getInstance(INSTANCE()).enable();
+            PushAgent.getInstance(INSTANCE()).register(new com.umeng.message.IUmengRegisterCallback() {
+                @Override
+                public void onSuccess(String deviceToken) {
+                    // 注册成功
+                }
+
+                @Override
+                public void onFailure(String s, String s1) {
+                    // 注册失败
+                }
+            });
             
             umengInitialized = true;
         } catch (Exception e) {
