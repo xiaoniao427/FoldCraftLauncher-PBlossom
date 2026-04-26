@@ -9,8 +9,9 @@ import android.view.Choreographer;
 
 import androidx.annotation.Nullable;
 
-import com.tungsten.fcl.FCLApplication;
+import android.content.Context;
 import com.tungsten.fclauncher.bridge.FCLBridge;
+import com.tungsten.fclauncher.FCLApplication;
 import com.tungsten.fclauncher.keycodes.LwjglGlfwKeycode;
 import com.tungsten.fclauncher.keycodes.LwjglKeycodeMap;
 
