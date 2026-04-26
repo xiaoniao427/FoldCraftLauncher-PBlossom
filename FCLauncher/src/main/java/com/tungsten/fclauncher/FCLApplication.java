@@ -7,7 +7,7 @@ public class FCLApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        // 初始化友盟SDK
+        // 初始化友盟SDK（精简版）
         UMConfigure.init(
             this, 
             "69e0f1b36f259537c79a2e80", 
