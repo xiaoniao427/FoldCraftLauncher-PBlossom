@@ -2,8 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     
-    <application
-        android:name=".FCLApplication">
+<application
+        android:name=".FCLApplication"
+        tools:replace="android:name">
+        tools:replace="android:name">
         <!-- 添加必要权限 -->
         <uses-permission android:name="android.permission.INTERNET" />
         <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
