@@ -2,12 +2,24 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     
-    <application>
+    <application
+        android:name=".FCLApplication">
         <!-- 添加必要权限 -->
         <uses-permission android:name="android.permission.INTERNET" />
         <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
         <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
         <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+        
+        <!-- 添加友盟配置 -->
+        <meta-data
+            android:name="UMENG_APPKEY"
+            android:value="69e0f1b36f259537c79a2e80" />
+        <meta-data
+            android:name="UMENG_MESSAGE_SECRET"
+            android:value="1853c4972a25c98245161c0bc6593e08" />
+        <meta-data
+            android:name="UMENG_CHANNEL"
+            android:value="GitHub" />
         
         <!-- 添加友盟推送服务 -->
         <service

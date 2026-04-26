@@ -29,3 +29,6 @@ google-services.json
 *.hprof
 FCL/src/main/java/com/mio/Main.kt
 .DS_Store
+
+# 签名和秘钥
+mykey.jks
