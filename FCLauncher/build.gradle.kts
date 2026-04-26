@@ -9,10 +9,12 @@ android {
     namespace = "com.tungsten.fclauncher"
     compileSdk = libs.versions.compileSdk.get().toInt()
     
-    // 添加manifest合并规则
-    packagingOptions {
-        merge "AndroidManifest.xml"
-        exclude 'META-INF/**'
+    // 正确manifest合并配置(Kotlin DSL)
+    packaging {
+        resources {
+            merges.add("AndroidManifest.xml")
+            excludes.add("META-INF/**")
+        }
     }
 
     defaultConfig {
