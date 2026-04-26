@@ -9,11 +9,16 @@ android {
     namespace = "com.tungsten.fclauncher"
     compileSdk = libs.versions.compileSdk.get().toInt()
     
-    // 正确manifest合并配置(Kotlin DSL)
+    // 优化清单合并配置
     packaging {
         resources {
-            merges.add("AndroidManifest.xml")
+            // 排除所有冲突的清单文件
+            excludes.add("AndroidManifest.xml")
             excludes.add("META-INF/**")
+            
+            // 保留必要的合并
+            merges.add("**/R.txt")
+            merges.add("**/*.bin")
         }
     }
 
