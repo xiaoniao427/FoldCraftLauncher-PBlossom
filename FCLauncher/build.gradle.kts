@@ -8,6 +8,12 @@ plugins {
 android {
     namespace = "com.tungsten.fclauncher"
     compileSdk = libs.versions.compileSdk.get().toInt()
+    
+    // 添加manifest合并规则
+    packagingOptions {
+        merge "AndroidManifest.xml"
+        exclude 'META-INF/**'
+    }
 
     defaultConfig {
         minSdk = libs.versions.minSdk.get().toInt()
