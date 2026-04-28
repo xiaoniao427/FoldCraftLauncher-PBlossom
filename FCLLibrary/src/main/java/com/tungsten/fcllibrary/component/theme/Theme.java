@@ -15,7 +15,7 @@ import android.graphics.drawable.BitmapDrawable;
 import androidx.core.graphics.ColorUtils;
 
 import com.mio.util.ImageUtil;
-import com.tungsten.fcl.FCLApplication;
+import com.tungsten.fclauncher.FCLApplication;
 import com.tungsten.fclcore.fakefx.beans.property.BooleanProperty;
 import com.tungsten.fclcore.fakefx.beans.property.IntegerProperty;
 import com.tungsten.fclcore.fakefx.beans.property.ObjectProperty;
