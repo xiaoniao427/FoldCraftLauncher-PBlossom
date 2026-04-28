@@ -32,3 +32,6 @@ FCL/src/main/java/com/mio/Main.kt
 
 # 签名和秘钥
 mykey.jks
+
+# 不是安卓媒体目录
+.nomedia
