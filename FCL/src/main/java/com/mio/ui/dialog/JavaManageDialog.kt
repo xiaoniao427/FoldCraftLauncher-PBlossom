@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.mio.JavaManager
 import com.mio.ui.adapter.ManageJavaItemAdapter
 import com.mio.util.checkElfIsAndroid
-import com.tungsten.fcl.FCLApplication
+import com.tungsten.fclauncher.FCLApplication;
 import com.tungsten.fcl.R
 import com.tungsten.fcl.databinding.DialogManageJavaBinding
 import com.tungsten.fcl.util.AndroidUtils
