@@ -3,8 +3,7 @@ package com.tungsten.fcl.util;
 import static android.content.Context.CLIPBOARD_SERVICE;
 import static android.os.Build.VERSION.SDK_INT;
 
-import static com.tungsten.fcl.FCLApplication.INSTANCE;
-import static com.tungsten.fcl.FCLApplication.getCurrentActivity;
+import com.tungsten.fclauncher.FCLApplication;
 import static com.tungsten.fclauncher.utils.AssetsPath.addPrefix;
 import static com.tungsten.fcllibrary.component.dialog.FCLAlertDialog.AlertLevel.ALERT;
 
@@ -61,6 +60,10 @@ import java.util.regex.Pattern;
 
 @SuppressLint("DiscouragedApi")
 public class AndroidUtils {
+    
+    private static FCLApplication getInstance() {
+        return FCLApplication.getInstance();
+    }
 
     public static void openLink(Context context, String link) {
         Uri uri = Uri.parse(link);
@@ -358,7 +361,7 @@ public class AndroidUtils {
     **/
     public static InputStream openAssets(Context context, String assPath) throws Exception {
         try {
-            return requireNonNullElse(context, INSTANCE()).getAssets().open(assPath);
+            return requireNonNullElse(context, FCLApplication.getInstance()).getAssets().open(assPath);
         }catch(FileNotFoundException e) {
             throw new FileNotFoundException("『" + assPath + "』文件不存在");
         }
