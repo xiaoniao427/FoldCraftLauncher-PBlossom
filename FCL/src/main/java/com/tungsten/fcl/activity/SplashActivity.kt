@@ -66,7 +66,7 @@ class SplashActivity : FCLActivity() {
     var jna: Boolean = false
     private lateinit var sharedPreferences: SharedPreferences
     // 延迟初始化 oldSelectedPath
-    private lateinit var oldSelectedPath: String
+    lateinit var oldSelectedPath: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
