@@ -185,6 +185,7 @@ public final class ConfigHolder {
                 .filter(configurations::containsKey)
                 .map(configurations::get)
                 .map(Profile::getGameDir)
+                .filter(Objects::nonNull)  // ← 添加这一行，过滤 null
                 .filter(gameDir -> checkPermission(gameDir.getAbsolutePath()))
                 .orElse(new File(PRIVATE_COMMON_DIR));
     }
