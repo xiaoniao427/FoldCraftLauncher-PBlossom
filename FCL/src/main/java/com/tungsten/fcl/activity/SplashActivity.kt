@@ -35,7 +35,6 @@ import com.tungsten.fclcore.util.io.FileUtils
 import com.tungsten.fcllibrary.component.FCLActivity
 import com.tungsten.fcllibrary.component.dialog.FCLAlertDialog
 import com.tungsten.fcllibrary.component.theme.ThemeEngine
-import com.tungsten.fcllibrary.util.LocaleUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -43,7 +42,6 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 import java.nio.file.Paths
-import java.util.Locale
 import java.util.logging.Level
 import com.tungsten.fcl.setting.ConfigHolder.*
 import com.tungsten.fcl.util.AndroidUtils.showErrorDialog
@@ -67,7 +65,8 @@ class SplashActivity : FCLActivity() {
     var java25: Boolean = false
     var jna: Boolean = false
     private lateinit var sharedPreferences: SharedPreferences
-    // 删除了原来的 oldSelectedPath 属性，改为在 initState 中局部获取
+    // 延迟初始化 oldSelectedPath
+    private lateinit var oldSelectedPath: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -256,7 +255,11 @@ class SplashActivity : FCLActivity() {
 
     private fun initState() {
         try {
-            val oldSelectedPath = getSelectedPath(initTempConfig()).absolutePath
+            // 安全地获取 oldSelectedPath
+            val tempConfig = initTempConfig()
+            val selectedFile = getSelectedPath(tempConfig)
+            oldSelectedPath = selectedFile.absolutePath
+
             gameFiles = RuntimeUtils.isLatest(
                 oldSelectedPath,
                 "/assets/.minecraft"
