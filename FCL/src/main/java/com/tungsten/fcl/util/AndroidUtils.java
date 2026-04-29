@@ -60,6 +60,10 @@ import java.util.regex.Pattern;
 
 @SuppressLint("DiscouragedApi")
 public class AndroidUtils {
+
+    private static FCLApplication getInstance() {
+        return FCLApplication.getInstance();
+    }
     
     private static FCLApplication getInstance() {
         return FCLApplication.getInstance();

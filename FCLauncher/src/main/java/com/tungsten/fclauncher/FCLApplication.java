@@ -6,12 +6,14 @@ import android.os.Bundle;
 import com.umeng.commonsdk.UMConfigure;
 
 public class FCLApplication extends Application implements Application.ActivityLifecycleCallbacks {
+    private static FCLApplication instance;
     
     private static Activity currentActivity;
     
     @Override
     public void onCreate() {
         super.onCreate();
+        instance = this;
         // 初始化友盟SDK（精简版）
         UMConfigure.init(
             this, 
@@ -62,5 +64,9 @@ public class FCLApplication extends Application implements Application.ActivityL
         if (currentActivity == activity) {
             currentActivity = null;
         }
+    }
+
+    public static FCLApplication getInstance() {
+        return instance;
     }
 }
