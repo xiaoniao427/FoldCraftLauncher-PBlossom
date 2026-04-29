@@ -42,7 +42,7 @@ import com.mio.manager.RendererManager;
 import com.mio.minecraft.ModCheckException;
 import com.mio.minecraft.ModChecker;
 import com.mio.util.ParseUtil;
-import com.tungsten.fcl.FCLApplication;
+import com.tungsten.fclauncher.FCLApplication;
 import com.tungsten.fcl.R;
 import com.tungsten.fcl.activity.JVMActivity;
 import com.tungsten.fcl.activity.MainActivity;
@@ -254,7 +254,7 @@ public final class LauncherHelper {
                                 MainActivity.getInstance().binding.videoView.stopPlayback();
                             }
                             if (context.getSharedPreferences("launcher", MODE_PRIVATE).getBoolean("autoExitLauncher", false)) {
-                                Activity activity = FCLApplication.getCurrentActivity();
+                                Activity activity = FCLApplication.getInstance().getCurrentActivity();
                                 if (activity != null)
                                     activity.finish();
                             }

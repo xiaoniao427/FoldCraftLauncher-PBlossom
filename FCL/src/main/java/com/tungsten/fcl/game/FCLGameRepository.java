@@ -31,7 +31,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.mio.manager.RendererManager;
-import com.tungsten.fcl.FCLApplication;
+import com.tungsten.fclauncher.FCLApplication;
 import com.tungsten.fcl.R;
 import com.tungsten.fcl.setting.Profile;
 import com.tungsten.fcl.setting.VersionSetting;
@@ -470,7 +470,7 @@ public class FCLGameRepository extends DefaultGameRepository {
         FCLBridge.FORCE_RESOLUTION = vs.isForceResolution();
         if (FCLBridge.FORCE_RESOLUTION) {
             try {
-                SharedPreferences preferences = Objects.requireNonNull(FCLApplication.getCurrentActivity()).getSharedPreferences("launcher", Context.MODE_PRIVATE);
+                SharedPreferences preferences = Objects.requireNonNull(FCLApplication.getInstance().getCurrentActivity()).getSharedPreferences("launcher", Context.MODE_PRIVATE);
                 String[] split = preferences.getString("force_resolution", "1920x1080").toLowerCase().split("x");
                 if (split.length == 2) {
                     int w = Integer.parseInt(split[0]);

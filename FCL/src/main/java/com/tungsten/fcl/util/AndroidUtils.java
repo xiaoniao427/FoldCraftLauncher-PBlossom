@@ -39,7 +39,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.mio.util.DisplayUtil;
-import com.tungsten.fcl.FCLApplication;
+import com.tungsten.fclauncher.FCLApplication;
 import com.tungsten.fcl.R;
 import com.tungsten.fcl.activity.WebActivity;
 import com.tungsten.fclcore.util.Logging;
