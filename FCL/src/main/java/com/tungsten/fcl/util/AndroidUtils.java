@@ -64,10 +64,6 @@ public class AndroidUtils {
     private static FCLApplication getInstance() {
         return FCLApplication.getInstance();
     }
-    
-    private static FCLApplication getInstance() {
-        return FCLApplication.getInstance();
-    }
 
     public static void openLink(Context context, String link) {
         Uri uri = Uri.parse(link);
