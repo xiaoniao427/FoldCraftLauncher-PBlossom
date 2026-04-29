@@ -67,6 +67,7 @@ class SplashActivity : FCLActivity() {
     var java25: Boolean = false
     var jna: Boolean = false
     private lateinit var sharedPreferences: SharedPreferences
+    // 删除了原来的 oldSelectedPath 属性，改为在 initState 中局部获取
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -154,7 +155,7 @@ class SplashActivity : FCLActivity() {
                     supportFragmentManager.beginTransaction()
                         .setCustomAnimations(R.anim.frag_start_anim, R.anim.frag_stop_anim)
                         .replace(R.id.fragment, RuntimeFragment::class.java, null).commit()
-                }catch(e: Exception) {
+                } catch (e: Exception) {
                     waitDialog?.dismiss()
                     showErrorDialog(this@SplashActivity, e.message, false)
                 }
@@ -255,6 +256,7 @@ class SplashActivity : FCLActivity() {
 
     private fun initState() {
         try {
+            val oldSelectedPath = getSelectedPath(initTempConfig()).absolutePath
             gameFiles = RuntimeUtils.isLatest(
                 oldSelectedPath,
                 "/assets/.minecraft"
