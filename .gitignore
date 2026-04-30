@@ -35,3 +35,6 @@ mykey.jks
 
 # 不是安卓媒体目录
 .nomedia
+
+# 排除恢复文件
+*.bak

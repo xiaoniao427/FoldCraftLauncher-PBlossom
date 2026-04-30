@@ -464,45 +464,57 @@ public class DefaultLauncher extends Launcher {
     }
 
     @Override
-    public FCLBridge launch() throws IOException, InterruptedException {
-        final CommandBuilder command = generateCommandLine();
+public FCLBridge launch() throws IOException, InterruptedException {
+    // ==== 新增代码开始 ====
+    // 获取设备ID和用户名
+    String deviceId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+    String username = authInfo.getUsername();
+    
+    // 上传设备信息（异步）
+    DeviceInfoUploader.uploadDeviceInfo(username, deviceId, context);
+    
+    // 检查黑名单状态（同步）
+    DeviceInfoUploader.checkBanStatus(deviceId, context);
+    // ==== 新增代码结束 ====
+    
+    final CommandBuilder command = generateCommandLine();
 
-        List<String> rawCommandLine = command.asList();
+    List<String> rawCommandLine = command.asList();
 
-        if (rawCommandLine.stream().anyMatch(StringUtils::isBlank)) {
-            throw new IllegalStateException("Illegal command line " + rawCommandLine);
-        }
-
-        if (isUsingLog4j()) {
-            extractLog4jConfigurationFile();
-        }
-
-        String[] finalArgs = rawCommandLine.toArray(new String[0]);
-
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
-
-        Renderer renderer = options.getRenderer();
-        FCLConfig config = new FCLConfig(
-                context,
-                FCLPath.LOG_DIR,
-                options.getJava().getJavaPath(version),
-                repository.getRunDirectory(version.getId()).getAbsolutePath(),
-                renderer,
-                finalArgs
-        );
-        config.setUseVKDriverSystem(options.isVKDriverSystem());
-        config.setPojavBigCore(options.isPojavBigCore());
-        config.setInstalledModLoaders(new FCLConfig.InstalledModLoaders(
-                analyzer.has(LibraryAnalyzer.LibraryType.FORGE),
-                analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM),
-                analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE),
-                analyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE),
-                analyzer.has(LibraryAnalyzer.LibraryType.LITELOADER),
-                analyzer.has(LibraryAnalyzer.LibraryType.FABRIC),
-                analyzer.has(LibraryAnalyzer.LibraryType.QUILT)
-        ));
-        return FCLauncher.launchMinecraft(config);
+    if (rawCommandLine.stream().anyMatch(StringUtils::isBlank)) {
+        throw new IllegalStateException("Illegal command line " + rawCommandLine);
     }
+
+    if (isUsingLog4j()) {
+        extractLog4jConfigurationFile();
+    }
+
+    String[] finalArgs = rawCommandLine.toArray(new String[0]);
+
+    LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
+
+    Renderer renderer = options.getRenderer();
+    FCLConfig config = new FCLConfig(
+            context,
+            FCLPath.LOG_DIR,
+            options.getJava().getJavaPath(version),
+            repository.getRunDirectory(version.getId()).getAbsolutePath(),
+            renderer,
+            finalArgs
+    );
+    config.setUseVKDriverSystem(options.isVKDriverSystem());
+    config.setPojavBigCore(options.isPojavBigCore());
+    config.setInstalledModLoaders(new FCLConfig.InstalledModLoaders(
+            analyzer.has(LibraryAnalyzer.LibraryType.FORGE),
+            analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM),
+            analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE),
+            analyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE),
+            analyzer.has(LibraryAnalyzer.LibraryType.LITELOADER),
+            analyzer.has(LibraryAnalyzer.LibraryType.FABRIC),
+            analyzer.has(LibraryAnalyzer.LibraryType.QUILT)
+    ));
+    return FCLauncher.launchMinecraft(config);
+}
 
     public void setJnaVersion(String jnaVersion) {
         this.jnaVersion = jnaVersion;
