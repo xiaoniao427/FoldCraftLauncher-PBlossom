@@ -18,12 +18,19 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.Dns;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -41,6 +48,36 @@ public class FCLApplication extends Application implements Application.ActivityL
     private static FCLApplication instance;
     private static WeakReference<Activity> currentActivityRef = new WeakReference<>(null);
     private String cachedDeviceId = null;
+
+    // 全局 OkHttpClient，强制使用 IPv4 地址
+    private static final OkHttpClient ipv4Client;
+
+    static {
+        ipv4Client = new OkHttpClient.Builder()
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .writeTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .dns(new Dns() {
+                    @Override
+                    public List<InetAddress> lookup(String hostname) throws UnknownHostException {
+                        // 获取所有地址
+                        InetAddress[] all = InetAddress.getAllByName(hostname);
+                        List<InetAddress> ipv4List = new ArrayList<>();
+                        for (InetAddress addr : all) {
+                            if (addr instanceof Inet4Address) {
+                                ipv4List.add(addr);
+                            }
+                        }
+                        // 如果找到 IPv4 地址则返回，否则回退到所有地址（可能只有 IPv6）
+                        if (!ipv4List.isEmpty()) {
+                            return ipv4List;
+                        }
+                        Log.w(TAG, "No IPv4 address found for " + hostname + ", falling back to all addresses");
+                        return Arrays.asList(all);
+                    }
+                })
+                .build();
+    }
 
     @Override
     public void onCreate() {
@@ -115,7 +152,7 @@ public class FCLApplication extends Application implements Application.ActivityL
     }
 
     /**
-     * 只上传 device_id 和 timestamp，不再包含 username
+     * 上传设备信息（只含 device_id 和 timestamp）
      */
     private void uploadDeviceInfo(String deviceId) {
         long timestamp = System.currentTimeMillis();
@@ -129,12 +166,6 @@ public class FCLApplication extends Application implements Application.ActivityL
             return;
         }
 
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(10, TimeUnit.SECONDS)
-                .writeTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .build();
-
         RequestBody body = RequestBody.create(
                 MediaType.parse("application/json"),
                 data.toString()
@@ -145,7 +176,7 @@ public class FCLApplication extends Application implements Application.ActivityL
                 .post(body)
                 .build();
 
-        client.newCall(request).enqueue(new Callback() {
+        ipv4Client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
                 Log.e(TAG, "Upload failed", e);
@@ -162,38 +193,36 @@ public class FCLApplication extends Application implements Application.ActivityL
         });
     }
 
+    /**
+     * 检查封禁状态（使用 IPv4 优先）
+     */
     private void checkBanStatus(String deviceId) {
-    final String finalDeviceId = (deviceId == null) ? "" : deviceId;
-    
-    OkHttpClient client = new OkHttpClient.Builder()
-            .connectTimeout(10, TimeUnit.SECONDS)
-            .readTimeout(10, TimeUnit.SECONDS)
-            .build();
+        final String finalDeviceId = (deviceId == null) ? "" : deviceId;
 
-    String encodedDeviceId = URLEncoder.encode(finalDeviceId);
-    String url = BAN_CHECK_URL + "?device_id=" + encodedDeviceId;
+        String encodedDeviceId = URLEncoder.encode(finalDeviceId);
+        String url = BAN_CHECK_URL + "?device_id=" + encodedDeviceId;
 
-    Request request = new Request.Builder()
-            .url(url)
-            .get()
-            .build();
+        Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .build();
 
-    client.newCall(request).enqueue(new Callback() {
-        @Override
-        public void onFailure(Call call, IOException e) {
-            Log.e(TAG, "Ban check failed", e);
-        }
-
-        @Override
-        public void onResponse(Call call, Response response) throws IOException {
-            String responseBody = response.body().string();
-            if (response.isSuccessful() && "banned".equals(responseBody)) {
-                showBanDialog();
-            } else {
-                uploadDeviceInfo(finalDeviceId);
+        ipv4Client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e(TAG, "Ban check failed", e);
             }
-        }
-    });
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String responseBody = response.body().string();
+                if (response.isSuccessful() && "banned".equals(responseBody)) {
+                    showBanDialog();
+                } else {
+                    uploadDeviceInfo(finalDeviceId);
+                }
+            }
+        });
     }
 
     private void showBanDialog() {
@@ -225,7 +254,7 @@ public class FCLApplication extends Application implements Application.ActivityL
         System.exit(0);
     }
 
-    // ActivityLifecycleCallbacks 实现（不变）
+    // ========== Activity 生命周期 ==========
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
         currentActivityRef = new WeakReference<>(activity);
