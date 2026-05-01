@@ -23,6 +23,7 @@ import static com.tungsten.fclcore.util.Pair.pair;
 
 import android.content.Context;
 import android.os.Build;
+import android.provider.Settings;   // 新增导入
 
 import com.google.gson.GsonBuilder;
 import com.mio.JavaManager;
