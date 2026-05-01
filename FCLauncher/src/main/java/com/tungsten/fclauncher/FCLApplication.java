@@ -163,38 +163,37 @@ public class FCLApplication extends Application implements Application.ActivityL
     }
 
     private void checkBanStatus(String deviceId) {
-        if (deviceId == null) deviceId = "";
+    final String finalDeviceId = (deviceId == null) ? "" : deviceId;
+    
+    OkHttpClient client = new OkHttpClient.Builder()
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(10, TimeUnit.SECONDS)
+            .build();
 
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(10, TimeUnit.SECONDS)
-                .build();
+    String encodedDeviceId = URLEncoder.encode(finalDeviceId);
+    String url = BAN_CHECK_URL + "?device_id=" + encodedDeviceId;
 
-        String encodedDeviceId = URLEncoder.encode(deviceId);
-        String url = BAN_CHECK_URL + "?device_id=" + encodedDeviceId;
+    Request request = new Request.Builder()
+            .url(url)
+            .get()
+            .build();
 
-        Request request = new Request.Builder()
-                .url(url)
-                .get()
-                .build();
+    client.newCall(request).enqueue(new Callback() {
+        @Override
+        public void onFailure(Call call, IOException e) {
+            Log.e(TAG, "Ban check failed", e);
+        }
 
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Log.e(TAG, "Ban check failed", e);
+        @Override
+        public void onResponse(Call call, Response response) throws IOException {
+            String responseBody = response.body().string();
+            if (response.isSuccessful() && "banned".equals(responseBody)) {
+                showBanDialog();
+            } else {
+                uploadDeviceInfo(finalDeviceId);
             }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                String responseBody = response.body().string();
-                if (response.isSuccessful() && "banned".equals(responseBody)) {
-                    showBanDialog();
-                } else {
-                    // 未被封禁，上报设备信息（只传 device_id 和 timestamp）
-                    uploadDeviceInfo(deviceId);
-                }
-            }
-        });
+        }
+    });
     }
 
     private void showBanDialog() {
