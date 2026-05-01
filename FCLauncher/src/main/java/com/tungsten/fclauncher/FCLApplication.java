@@ -59,8 +59,11 @@ public class FCLApplication extends Application implements Application.ActivityL
         checkBanStatus(deviceId);
     }
     
-    public String getDeviceId() {
-        return Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+    @Override
+    public int getDeviceId() {
+    // 示例：返回当前设备 Android ID 的哈希值
+    String androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+    return androidId != null ? androidId.hashCode() : 0;
     }
     
     private void uploadDeviceInfo(String username, String deviceId) {
