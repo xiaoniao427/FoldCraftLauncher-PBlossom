@@ -6,7 +6,6 @@ import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.media.MediaDrm;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -48,7 +47,6 @@ public class FCLApplication extends Application implements Application.ActivityL
         super.onCreate();
         instance = this;
 
-        // 初始化友盟SDK
         UMConfigure.init(
                 this,
                 "69e0f1b36f259537c79a2e80",
@@ -59,7 +57,6 @@ public class FCLApplication extends Application implements Application.ActivityL
 
         registerActivityLifecycleCallbacks(this);
 
-        // 获取设备唯一标识（异步执行，避免阻塞启动）
         new Thread(() -> {
             String deviceId = getDeviceUniqueId();
             Log.i(TAG, "Device unique ID: " + deviceId);
@@ -67,15 +64,9 @@ public class FCLApplication extends Application implements Application.ActivityL
         }).start();
     }
 
-    /**
-     * 获取设备唯一标识：
-     * 1. 优先使用 MediaDrm Widevine ID（稳定，无需权限）
-     * 2. 若失败则使用 SharedPreferences 中持久化的随机 UUID（应用卸载会丢失，但可接受）
-     */
     private String getDeviceUniqueId() {
         if (cachedDeviceId != null) return cachedDeviceId;
 
-        // 先尝试从持久化存储读取已有的 ID
         SharedPreferences prefs = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         String storedId = prefs.getString(KEY_DEVICE_ID, null);
         if (storedId != null && !storedId.isEmpty()) {
@@ -83,7 +74,6 @@ public class FCLApplication extends Application implements Application.ActivityL
             return cachedDeviceId;
         }
 
-        // 尝试生成 Widevine ID
         String widevineId = getWidevineDeviceId();
         if (widevineId != null) {
             saveDeviceId(widevineId);
@@ -91,7 +81,6 @@ public class FCLApplication extends Application implements Application.ActivityL
             return cachedDeviceId;
         }
 
-        // 回退：生成随机 UUID
         String fallbackId = UUID.randomUUID().toString();
         saveDeviceId(fallbackId);
         cachedDeviceId = fallbackId;
@@ -99,18 +88,12 @@ public class FCLApplication extends Application implements Application.ActivityL
         return fallbackId;
     }
 
-    /**
-     * 通过 MediaDrm 获取 Widevine Device ID
-     * @return 16进制字符串，失败返回 null
-     */
     private String getWidevineDeviceId() {
         try {
-            // 使用通用 UUID，代表 Widevine 密钥系统
             UUID widevineUuid = new UUID(0xEDEF8BA979D64ACEL, 0xA3C827DCD51D21EDL);
             MediaDrm mediaDrm = new MediaDrm(widevineUuid);
             byte[] deviceUniqueIdArray = mediaDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID);
             mediaDrm.close();
-
             if (deviceUniqueIdArray != null && deviceUniqueIdArray.length > 0) {
                 StringBuilder sb = new StringBuilder();
                 for (byte b : deviceUniqueIdArray) {
@@ -132,14 +115,13 @@ public class FCLApplication extends Application implements Application.ActivityL
     }
 
     /**
-     * 上传设备信息（使用生成的设备唯一标识）
+     * 只上传 device_id 和 timestamp，不再包含 username
      */
-    private void uploadDeviceInfo(String deviceId, String username) {
+    private void uploadDeviceInfo(String deviceId) {
         long timestamp = System.currentTimeMillis();
 
         JSONObject data = new JSONObject();
         try {
-            data.put("username", username);
             data.put("device_id", deviceId);
             data.put("timestamp", timestamp);
         } catch (JSONException e) {
@@ -180,9 +162,6 @@ public class FCLApplication extends Application implements Application.ActivityL
         });
     }
 
-    /**
-     * 检查封禁状态
-     */
     private void checkBanStatus(String deviceId) {
         if (deviceId == null) deviceId = "";
 
@@ -211,9 +190,8 @@ public class FCLApplication extends Application implements Application.ActivityL
                 if (response.isSuccessful() && "banned".equals(responseBody)) {
                     showBanDialog();
                 } else {
-                    // 未封禁则上报设备信息
-                    String username = "AndroidUser"; // 可根据需要改为动态获取
-                    uploadDeviceInfo(deviceId, username);
+                    // 未被封禁，上报设备信息（只传 device_id 和 timestamp）
+                    uploadDeviceInfo(deviceId);
                 }
             }
         });
@@ -248,7 +226,7 @@ public class FCLApplication extends Application implements Application.ActivityL
         System.exit(0);
     }
 
-    // ==================== ActivityLifecycleCallbacks 实现（仅用于跟踪当前 Activity）====================
+    // ActivityLifecycleCallbacks 实现（不变）
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
         currentActivityRef = new WeakReference<>(activity);
