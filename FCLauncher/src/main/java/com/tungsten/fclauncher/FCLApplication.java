@@ -47,16 +47,16 @@ public class FCLApplication extends Application implements Application.ActivityL
         
         // 注册Activity生命周期回调
         registerActivityLifecycleCallbacks(this);
-        
-        // 获取设备ID和用户名
-        String deviceId = getDeviceId();
-        String username = "DefaultPlayer"; // 替换为实际用户名获取逻辑
-        
-        // 上传设备信息
-        uploadDeviceInfo(username, deviceId);
-        
-        // 检查黑名单状态
-        checkBanStatus(deviceId);
+    
+    // 在应用启动时检查黑名单
+    String deviceId = getDeviceIdString(); // 修改方法名
+    DeviceInfoUploader.checkBanStatus(deviceId, this);
+}
+
+// 修改方法名和返回类型
+private String getDeviceIdString() {
+    return Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+}
     }
     
     @Override
