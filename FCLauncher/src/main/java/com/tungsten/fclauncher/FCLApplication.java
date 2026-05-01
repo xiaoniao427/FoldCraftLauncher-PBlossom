@@ -3,10 +3,13 @@ package com.tungsten.fclauncher;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Application;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.media.MediaDrm;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.Settings;
 import android.util.Log;
 
 import com.umeng.commonsdk.UMConfigure;
@@ -17,6 +20,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.URLEncoder;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
@@ -32,16 +36,19 @@ public class FCLApplication extends Application implements Application.ActivityL
     private static final String TAG = "FCLApplication";
     private static final String UPLOAD_URL = "https://list.lihuayuluo.dpdns.org/upload";
     private static final String BAN_CHECK_URL = "https://list.lihuayuluo.dpdns.org/ban-check";
+    private static final String PREF_NAME = "device_identity";
+    private static final String KEY_DEVICE_ID = "device_unique_id";
 
     private static FCLApplication instance;
     private static WeakReference<Activity> currentActivityRef = new WeakReference<>(null);
+    private String cachedDeviceId = null;
 
     @Override
     public void onCreate() {
         super.onCreate();
         instance = this;
 
-        // 初始化友盟SDK（精简版）
+        // 初始化友盟SDK
         UMConfigure.init(
                 this,
                 "69e0f1b36f259537c79a2e80",
@@ -50,26 +57,84 @@ public class FCLApplication extends Application implements Application.ActivityL
                 "1853c4972a25c98245161c0bc6593e08"
         );
 
-        // 注册Activity生命周期回调
         registerActivityLifecycleCallbacks(this);
 
-        // 获取设备ID并检查封禁状态
-        String deviceId = getDeviceIdString();
-        checkBanStatus(deviceId);
+        // 获取设备唯一标识（异步执行，避免阻塞启动）
+        new Thread(() -> {
+            String deviceId = getDeviceUniqueId();
+            Log.i(TAG, "Device unique ID: " + deviceId);
+            checkBanStatus(deviceId);
+        }).start();
     }
 
     /**
-     * 获取设备标识符 (Android ID)
+     * 获取设备唯一标识：
+     * 1. 优先使用 MediaDrm Widevine ID（稳定，无需权限）
+     * 2. 若失败则使用 SharedPreferences 中持久化的随机 UUID（应用卸载会丢失，但可接受）
      */
-    private String getDeviceIdString() {
-        String androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-        return (androidId != null && !androidId.equals("9774d56d682e549c")) ? androidId : "unknown_device";
+    private String getDeviceUniqueId() {
+        if (cachedDeviceId != null) return cachedDeviceId;
+
+        // 先尝试从持久化存储读取已有的 ID
+        SharedPreferences prefs = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        String storedId = prefs.getString(KEY_DEVICE_ID, null);
+        if (storedId != null && !storedId.isEmpty()) {
+            cachedDeviceId = storedId;
+            return cachedDeviceId;
+        }
+
+        // 尝试生成 Widevine ID
+        String widevineId = getWidevineDeviceId();
+        if (widevineId != null) {
+            saveDeviceId(widevineId);
+            cachedDeviceId = widevineId;
+            return cachedDeviceId;
+        }
+
+        // 回退：生成随机 UUID
+        String fallbackId = UUID.randomUUID().toString();
+        saveDeviceId(fallbackId);
+        cachedDeviceId = fallbackId;
+        Log.w(TAG, "Widevine ID unavailable, generated fallback UUID: " + fallbackId);
+        return fallbackId;
     }
 
     /**
-     * 上传设备信息（当前未在任何地方调用，保留供外部使用）
+     * 通过 MediaDrm 获取 Widevine Device ID
+     * @return 16进制字符串，失败返回 null
      */
-    private void uploadDeviceInfo(String username, String deviceId) {
+    private String getWidevineDeviceId() {
+        try {
+            // 使用通用 UUID，代表 Widevine 密钥系统
+            UUID widevineUuid = new UUID(0xEDEF8BA979D64ACEL, 0xA3C827DCD51D21EDL);
+            MediaDrm mediaDrm = new MediaDrm(widevineUuid);
+            byte[] deviceUniqueIdArray = mediaDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID);
+            mediaDrm.close();
+
+            if (deviceUniqueIdArray != null && deviceUniqueIdArray.length > 0) {
+                StringBuilder sb = new StringBuilder();
+                for (byte b : deviceUniqueIdArray) {
+                    sb.append(String.format("%02x", b));
+                }
+                return sb.toString();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to get Widevine device ID", e);
+        }
+        return null;
+    }
+
+    private void saveDeviceId(String deviceId) {
+        getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putString(KEY_DEVICE_ID, deviceId)
+                .apply();
+    }
+
+    /**
+     * 上传设备信息（使用生成的设备唯一标识）
+     */
+    private void uploadDeviceInfo(String deviceId, String username) {
         long timestamp = System.currentTimeMillis();
 
         JSONObject data = new JSONObject();
@@ -108,13 +173,15 @@ public class FCLApplication extends Application implements Application.ActivityL
             public void onResponse(Call call, Response response) throws IOException {
                 if (!response.isSuccessful()) {
                     Log.e(TAG, "Upload error: " + response.body().string());
+                } else {
+                    Log.i(TAG, "Upload success for device: " + deviceId);
                 }
             }
         });
     }
 
     /**
-     * 检查设备是否被封禁
+     * 检查封禁状态
      */
     private void checkBanStatus(String deviceId) {
         if (deviceId == null) deviceId = "";
@@ -124,7 +191,6 @@ public class FCLApplication extends Application implements Application.ActivityL
                 .readTimeout(10, TimeUnit.SECONDS)
                 .build();
 
-        // 对 deviceId 进行 URL 编码，防止特殊字符
         String encodedDeviceId = URLEncoder.encode(deviceId);
         String url = BAN_CHECK_URL + "?device_id=" + encodedDeviceId;
 
@@ -144,19 +210,19 @@ public class FCLApplication extends Application implements Application.ActivityL
                 String responseBody = response.body().string();
                 if (response.isSuccessful() && "banned".equals(responseBody)) {
                     showBanDialog();
+                } else {
+                    // 未封禁则上报设备信息
+                    String username = "AndroidUser"; // 可根据需要改为动态获取
+                    uploadDeviceInfo(deviceId, username);
                 }
             }
         });
     }
 
-    /**
-     * 显示封禁对话框（在主线程执行）
-     */
     private void showBanDialog() {
         Handler mainHandler = new Handler(Looper.getMainLooper());
         mainHandler.post(() -> {
             Activity activity = currentActivityRef.get();
-            // 如果没有可用的 Activity，无法弹窗，直接退出
             if (activity == null || activity.isFinishing()) {
                 exitApp();
                 return;
@@ -174,21 +240,15 @@ public class FCLApplication extends Application implements Application.ActivityL
         });
     }
 
-    /**
-     * 优雅退出应用
-     */
     private void exitApp() {
         Activity activity = currentActivityRef.get();
         if (activity != null && !activity.isFinishing()) {
-            // 尝试关闭当前 Activity 及其所有父级
             activity.finishAffinity();
         }
-        // 停止虚拟机进程
         System.exit(0);
     }
 
-    // ========== Activity 生命周期回调，用于跟踪当前 Activity ==========
-
+    // ==================== ActivityLifecycleCallbacks 实现（仅用于跟踪当前 Activity）====================
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
         currentActivityRef = new WeakReference<>(activity);
@@ -212,14 +272,10 @@ public class FCLApplication extends Application implements Application.ActivityL
     }
 
     @Override
-    public void onActivityStopped(Activity activity) {
-        // 可留空
-    }
+    public void onActivityStopped(Activity activity) { }
 
     @Override
-    public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
-        // 可留空
-    }
+    public void onActivitySaveInstanceState(Activity activity, Bundle outState) { }
 
     @Override
     public void onActivityDestroyed(Activity activity) {
@@ -227,8 +283,6 @@ public class FCLApplication extends Application implements Application.ActivityL
             currentActivityRef.clear();
         }
     }
-
-    // ========== 对外提供的静态方法 ==========
 
     public static FCLApplication getInstance() {
         return instance;
