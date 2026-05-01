@@ -59,7 +59,7 @@ public class FCLApplication extends Application implements Application.ActivityL
         checkBanStatus(deviceId);
     }
     
-    private String getDeviceId() {
+    public String getDeviceId() {
         return Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
     }
     
