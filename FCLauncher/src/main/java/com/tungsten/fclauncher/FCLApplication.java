@@ -56,7 +56,6 @@ public class FCLApplication extends Application implements Application.ActivityL
 // 修改方法名和返回类型
 private String getDeviceIdString() {
     return Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-}
     }
     
     @Override
