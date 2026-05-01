@@ -50,4 +50,5 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.jsoup)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }
