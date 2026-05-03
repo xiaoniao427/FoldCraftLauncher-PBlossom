@@ -70,6 +70,7 @@ dependencies {
     implementation(libs.bytehook)
     implementation(libs.appcompat)
     implementation(libs.material)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.umeng.umsdk:common:+")//必选
     implementation("com.umeng.umsdk:asms:+")//必选
     implementation("com.umeng.umsdk:uyumao:+") //高级运营分析功能依赖库（可选）。使用卸载分析、开启反作弊能力请务必集成，以免影响高级功能使用。common需搭配v9.6.3及以上版本，asms需搭配v1.7.0及以上版本。需更新隐私声明。需配置混淆，以避免依赖库无法生效，见本文下方【混淆设置】部分。
