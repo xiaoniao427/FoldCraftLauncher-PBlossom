@@ -13,7 +13,7 @@ import android.util.Log;
 
 import com.umeng.commonsdk.UMConfigure;
 import com.umeng.message.PushAgent;
-import com.umeng.message.UPushRegisterCallback;
+import com.umeng.message.api.UPushRegisterCallback;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -86,7 +86,7 @@ public class FCLApplication extends Application implements Application.ActivityL
         super.onCreate();
         instance = this;
 
-        // 基础初始化（已存在）
+        // 基础初始化（友盟统计基础库）
         UMConfigure.init(
                 this,
                 "69e0f1b36f259537c79a2e80",
@@ -94,7 +94,7 @@ public class FCLApplication extends Application implements Application.ActivityL
                 UMConfigure.DEVICE_TYPE_PHONE,
                 "1853c4972a25c98245161c0bc6593e08"
         );
-        // 可选：开启日志便于调试
+        // 开启日志便于调试
         UMConfigure.setLogEnabled(true);
 
         registerActivityLifecycleCallbacks(this);
@@ -111,11 +111,10 @@ public class FCLApplication extends Application implements Application.ActivityL
     }
 
     /**
-     * 推送注册及 deviceToken 文件生成
+     * 友盟推送注册及 deviceToken 文件生成
      */
     private void initPush() {
         PushAgent pushAgent = PushAgent.getInstance(this);
-        // 如果需要厂商通道，可在此额外配置，示例仅做基础注册
         pushAgent.register(new UPushRegisterCallback() {
             @Override
             public void onSuccess(String deviceToken) {
@@ -146,7 +145,7 @@ public class FCLApplication extends Application implements Application.ActivityL
         }
     }
 
-    // ---------- 以下为原有代码，未做改动，仅保留完整性 ----------
+    // ---------- 以下为原有代码（设备ID获取、上传、封禁检查等） ----------
     private String getDeviceUniqueId() {
         if (cachedDeviceId != null) return cachedDeviceId;
 
@@ -294,6 +293,7 @@ public class FCLApplication extends Application implements Application.ActivityL
         System.exit(0);
     }
 
+    // ========== Activity 生命周期回调 ==========
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
         currentActivityRef = new WeakReference<>(activity);
