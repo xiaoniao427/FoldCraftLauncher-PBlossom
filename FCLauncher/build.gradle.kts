@@ -80,4 +80,6 @@ dependencies {
     api("com.umeng.umsdk:asms:+")
     api("com.umeng.umsdk:push:+")
     api("com.umeng.umsdk:uyumao:+")//可选，如要使用地理围栏推送功能则必选
+    api("com.umeng.umsdk:xiaomi-umengaccs:2.3.0")
+    api("com.umeng.umsdk:xiaomi-push:7.9.2")
 }
