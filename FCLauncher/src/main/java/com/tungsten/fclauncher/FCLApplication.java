@@ -5,11 +5,18 @@ import android.app.AlertDialog;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.media.MediaDrm;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import com.umeng.commonsdk.UMConfigure;
 import com.umeng.message.PushAgent;
@@ -48,10 +55,17 @@ public class FCLApplication extends Application implements Application.ActivityL
     private static final String BAN_CHECK_URL = "https://list.lihuayuluo.dpdns.org/ban-check";
     private static final String PREF_NAME = "device_identity";
     private static final String KEY_DEVICE_ID = "device_unique_id";
+    
+    // 获取公网 IP 的接口
+    private static final String PUBLIC_IP_URL = "https://ipv4.lookup.test-ipv6.com/ip/";
+
+    // 水印相关常量
+    private static final int WATERMARK_VIEW_ID = 0x7F090001;
 
     private static FCLApplication instance;
     private static WeakReference<Activity> currentActivityRef = new WeakReference<>(null);
     private String cachedDeviceId = null;
+    private String cachedIpAddress = null;   // 缓存公网 IPv4 地址
 
     // 全局 OkHttpClient，强制使用 IPv4 地址
     private static final OkHttpClient ipv4Client;
@@ -119,7 +133,6 @@ public class FCLApplication extends Application implements Application.ActivityL
             @Override
             public void onSuccess(String deviceToken) {
                 Log.i(TAG, "Push registration success, deviceToken: " + deviceToken);
-                // 获取到 token 后写入文件
                 writeDeviceTokenToFile(deviceToken);
             }
 
@@ -132,7 +145,6 @@ public class FCLApplication extends Application implements Application.ActivityL
 
     /**
      * 在应用私有目录根目录生成文件，内容为 deviceToken 信息
-     * 文件名：device_token.txt
      */
     private void writeDeviceTokenToFile(String deviceToken) {
         File file = new File(getFilesDir(), "device_token.txt");
@@ -145,7 +157,7 @@ public class FCLApplication extends Application implements Application.ActivityL
         }
     }
 
-    // ---------- 以下为原有代码（设备ID获取、上传、封禁检查等） ----------
+    // ---------- 设备ID相关 ----------
     private String getDeviceUniqueId() {
         if (cachedDeviceId != null) return cachedDeviceId;
 
@@ -196,6 +208,7 @@ public class FCLApplication extends Application implements Application.ActivityL
                 .apply();
     }
 
+    // ---------- 服务器交互 ----------
     private void uploadDeviceInfo(String deviceId) {
         long timestamp = System.currentTimeMillis();
 
@@ -293,7 +306,124 @@ public class FCLApplication extends Application implements Application.ActivityL
         System.exit(0);
     }
 
-    // ========== Activity 生命周期回调 ==========
+    // ---------- 公网 IP 获取（通过远程接口）----------
+    /**
+     * 通过 https://ipv4.lookup.test-ipv6.com/ip/ 获取公网 IPv4 地址
+     * 响应格式为 JSONP: callback({"ip":"116.141.52.191","type":"ipv4",...})
+     * @return 公网 IPv4 地址字符串，失败时返回本地 IP 回退
+     */
+    private String getPublicIpAddress() {
+        Request request = new Request.Builder()
+                .url(PUBLIC_IP_URL)
+                .get()
+                .build();
+
+        try (Response response = ipv4Client.newCall(request).execute()) {
+            if (response.isSuccessful() && response.body() != null) {
+                String responseBody = response.body().string();
+                // 解析 JSONP 格式: callback({...})
+                String jsonStr = extractJsonFromJsonp(responseBody);
+                JSONObject json = new JSONObject(jsonStr);
+                String ip = json.optString("ip", null);
+                if (ip != null && !ip.isEmpty()) {
+                    Log.i(TAG, "Got public IP: " + ip);
+                    return ip;
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to get public IP", e);
+        }
+        
+        // 降级方案：获取本地局域网 IP 作为回退
+        String fallbackIp = getLocalIpAddress();
+        Log.w(TAG, "Using fallback local IP: " + fallbackIp);
+        return fallbackIp;
+    }
+
+    /**
+     * 从 JSONP 响应中提取 JSON 字符串
+     * @param jsonp 格式例如: callback({"ip":"1.2.3.4",...})
+     * @return 纯 JSON 字符串
+     */
+    private String extractJsonFromJsonp(String jsonp) {
+        if (jsonp == null) return "{}";
+        int start = jsonp.indexOf('{');
+        int end = jsonp.lastIndexOf('}');
+        if (start != -1 && end != -1 && end > start) {
+            return jsonp.substring(start, end + 1);
+        }
+        return "{}";
+    }
+
+    /**
+     * 获取本地局域网 IPv4 地址（作为降级方案）
+     */
+    private String getLocalIpAddress() {
+        try {
+            java.util.Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces();
+            while (interfaces.hasMoreElements()) {
+                java.net.NetworkInterface iface = interfaces.nextElement();
+                if (iface.isLoopback() || iface.isVirtual() || !iface.isUp())
+                    continue;
+
+                java.util.Enumeration<java.net.InetAddress> addresses = iface.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    java.net.InetAddress addr = addresses.nextElement();
+                    if (addr instanceof Inet4Address) {
+                        String ip = addr.getHostAddress();
+                        if (ip != null && !ip.startsWith("169.254")) {
+                            return ip;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to get local IP", e);
+        }
+        return "0.0.0.0";
+    }
+
+    /**
+     * 给当前 Activity 添加隐形水印（不响应点击，不影响输入）
+     */
+    private void addWatermark(Activity activity, String ipAddress) {
+        if (activity == null || activity.isFinishing()) return;
+
+        ViewGroup rootView = activity.getWindow().getDecorView().findViewById(android.R.id.content);
+        if (rootView == null) rootView = (ViewGroup) activity.getWindow().getDecorView();
+
+        // 移除已存在的水印，避免重复添加
+        View oldWatermark = rootView.findViewById(WATERMARK_VIEW_ID);
+        if (oldWatermark != null) {
+            rootView.removeView(oldWatermark);
+        }
+
+        // 创建水印 TextView
+        TextView watermark = new TextView(activity);
+        watermark.setId(WATERMARK_VIEW_ID);
+        watermark.setText("IP: " + ipAddress);
+        watermark.setTextColor(Color.parseColor("#08000000")); // 极淡的黑色（透明度约 3%）
+        watermark.setTextSize(TypedValue.COMPLEX_UNIT_SP, 40);
+        watermark.setRotation(-20f);
+        watermark.setClickable(false);
+        watermark.setFocusable(false);
+        watermark.setEnabled(false);
+        watermark.setFocusableInTouchMode(false);
+        watermark.setBackgroundColor(Color.TRANSPARENT);
+
+        // 全屏铺开，不干扰触摸事件
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        );
+        params.gravity = Gravity.CENTER;
+        watermark.setLayoutParams(params);
+        watermark.setGravity(Gravity.CENTER);
+
+        rootView.addView(watermark);
+    }
+
+    // ---------- Activity 生命周期回调 ----------
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
         currentActivityRef = new WeakReference<>(activity);
@@ -307,6 +437,19 @@ public class FCLApplication extends Application implements Application.ActivityL
     @Override
     public void onActivityResumed(Activity activity) {
         currentActivityRef = new WeakReference<>(activity);
+
+        // 在子线程中获取公网 IP，避免阻塞 UI
+        new Thread(() -> {
+            if (cachedIpAddress == null) {
+                cachedIpAddress = getPublicIpAddress();
+            }
+            String ip = cachedIpAddress;
+            if (ip == null) ip = "0.0.0.0";
+            final String finalIp = ip;
+
+            // 切换回主线程添加水印
+            new Handler(Looper.getMainLooper()).post(() -> addWatermark(activity, finalIp));
+        }).start();
     }
 
     @Override
@@ -329,6 +472,7 @@ public class FCLApplication extends Application implements Application.ActivityL
         }
     }
 
+    // ---------- 静态工具方法 ----------
     public static FCLApplication getInstance() {
         return instance;
     }
