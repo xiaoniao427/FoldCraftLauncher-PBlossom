@@ -351,42 +351,30 @@ public class FCLApplication extends Application implements Application.ActivityL
         return "0.0.0.0";
     }
 
-    // ---------- 自定义平铺水印 View（带描边）----------
+    // ---------- 平铺水印 View（每行两个 IP，极淡透明，无描边）----------
     private static class TiledWatermarkView extends View {
-        private final String watermarkText;
+        private final String watermarkText;   // 内容为 "IP IP"
         private final Paint textPaint;
-        private final Paint strokePaint;
-        private final int textColor = Color.parseColor("#33FFFFFF");   // 半透白
-        private final int strokeColor = Color.BLACK;
         private final float textSizeSp = 24f;
-        private final float strokeWidthPx;
-        private final float spacingDp = 150f;   // 水印间距（dp）
+        private final float spacingDp = 150f;
         private float spacingPx;
         private float textSizePx;
 
-        public TiledWatermarkView(Context context, String text) {
+        public TiledWatermarkView(Context context, String ip) {
             super(context);
-            this.watermarkText = text;
+            // 每行显示两个相同的 IP，中间用空格分隔
+            this.watermarkText = ip + " " + ip;
 
             textSizePx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, textSizeSp,
-                    getResources().getDisplayMetrics());
-            strokeWidthPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2f,
                     getResources().getDisplayMetrics());
             spacingPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, spacingDp,
                     getResources().getDisplayMetrics());
 
             textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             textPaint.setTextSize(textSizePx);
-            textPaint.setColor(textColor);
+            textPaint.setColor(Color.parseColor("#08000000")); // 极淡黑色，透明度约3%
             textPaint.setStyle(Paint.Style.FILL);
 
-            strokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            strokePaint.setTextSize(textSizePx);
-            strokePaint.setColor(strokeColor);
-            strokePaint.setStyle(Paint.Style.STROKE);
-            strokePaint.setStrokeWidth(strokeWidthPx);
-
-            // 确保不拦截触摸事件
             setClickable(false);
             setFocusable(false);
             setEnabled(false);
@@ -401,19 +389,14 @@ public class FCLApplication extends Application implements Application.ActivityL
             int height = getHeight();
             if (width <= 0 || height <= 0) return;
 
-            // 计算文本宽度和高度（用于估算平铺偏移）
             float textWidth = textPaint.measureText(watermarkText);
             float textHeight = -textPaint.ascent() + textPaint.descent();
 
-            // 从左上到右下斜向平铺，角度 -45°
             canvas.save();
             canvas.rotate(-45f, width / 2f, height / 2f);
 
-            // 平铺起始点：从负宽高开始，覆盖整个画布
             for (float x = -width; x < width + textWidth; x += spacingPx) {
                 for (float y = -height; y < height + textHeight; y += spacingPx) {
-                    // 先绘制描边，再绘制填充
-                    canvas.drawText(watermarkText, x, y, strokePaint);
                     canvas.drawText(watermarkText, x, y, textPaint);
                 }
             }
@@ -423,23 +406,20 @@ public class FCLApplication extends Application implements Application.ActivityL
 
         @Override
         public boolean onTouchEvent(android.view.MotionEvent event) {
-            // 完全不响应触摸事件，让事件穿透
-            return false;
+            return false; // 完全不响应触摸
         }
     }
 
-    // 添加水印视图到当前 Activity
     private void addWatermark(Activity activity, String ipAddress) {
         if (activity == null || activity.isFinishing()) return;
 
         ViewGroup rootView = (ViewGroup) activity.getWindow().getDecorView();
-        // 移除旧水印
         View oldWatermark = rootView.findViewById(WATERMARK_VIEW_ID);
         if (oldWatermark != null) {
             rootView.removeView(oldWatermark);
         }
 
-        TiledWatermarkView watermark = new TiledWatermarkView(activity, "IP: " + ipAddress);
+        TiledWatermarkView watermark = new TiledWatermarkView(activity, ipAddress);
         watermark.setId(WATERMARK_VIEW_ID);
 
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
