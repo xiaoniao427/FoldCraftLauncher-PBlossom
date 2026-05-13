@@ -35,8 +35,11 @@ import java.net.UnknownHostException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.WeakHashMap;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
@@ -63,6 +66,9 @@ public class FCLApplication extends Application implements Application.ActivityL
     private static WeakReference<Activity> currentActivityRef = new WeakReference<>(null);
     private String cachedDeviceId = null;
     private String cachedIpAddress = null;
+
+    // 记录已经添加过水印的 Activity，防止重复添加
+    private final Set<Activity> watermarkedActivities = Collections.newSetFromMap(new WeakHashMap<>());
 
     private static final OkHttpClient ipv4Client;
 
@@ -351,12 +357,12 @@ public class FCLApplication extends Application implements Application.ActivityL
         return "0.0.0.0";
     }
 
-    // ---------- 平铺水印 View（参数优化：更小字体 + 更稀疏）----------
+    // ---------- 平铺水印 View（小字体 + 大间距）----------
     private static class TiledWatermarkView extends View {
         private final String watermarkText;   // 内容为 "IP  IP" (两个空格)
         private final Paint textPaint;
-        private final float textSizeSp = 18f;   // 调小字体（原36sp）
-        private final float spacingDp = 250f;   // 增大间距，更稀疏（原150dp）
+        private final float textSizeSp = 18f;   // 调小字体
+        private final float spacingDp = 250f;   // 增大间距，更稀疏
         private float spacingPx;
         private float textSizePx;
 
@@ -394,6 +400,7 @@ public class FCLApplication extends Application implements Application.ActivityL
             canvas.save();
             canvas.rotate(-45f, width / 2f, height / 2f);
 
+            // 微调起始偏移，使分布更均匀（非必须，可自行调整）
             for (float x = -width; x < width + textWidth; x += spacingPx) {
                 for (float y = -height; y < height + textHeight; y += spacingPx) {
                     canvas.drawText(watermarkText, x, y, textPaint);
@@ -410,28 +417,35 @@ public class FCLApplication extends Application implements Application.ActivityL
     }
 
     /**
-     * 添加水印（防止重复渲染）
+     * 添加水印（防止重复渲染，基于 Activity 实例去重）
      */
     private void addWatermark(Activity activity, String ipAddress) {
         if (activity == null || activity.isFinishing()) return;
 
+        // 关键：如果该 Activity 已经添加过水印，直接返回
+        if (watermarkedActivities.contains(activity)) {
+            Log.v(TAG, "Watermark already added for this activity, skip");
+            return;
+        }
+
         ViewGroup rootView = (ViewGroup) activity.getWindow().getDecorView();
         View oldWatermark = rootView.findViewById(WATERMARK_VIEW_ID);
-        // 水印已存在，不再重复添加
         if (oldWatermark != null) {
-            Log.v(TAG, "Watermark already exists, skip adding");
+            // 已有水印视图但记录可能丢失（极少见），依然认为已添加
+            watermarkedActivities.add(activity);
             return;
         }
 
         TiledWatermarkView watermark = new TiledWatermarkView(activity, ipAddress);
         watermark.setId(WATERMARK_VIEW_ID);
-
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
         );
         watermark.setLayoutParams(params);
         rootView.addView(watermark);
+        watermarkedActivities.add(activity);
+        Log.i(TAG, "Watermark added for activity: " + activity.getClass().getSimpleName());
     }
 
     // ---------- Activity 生命周期 ----------
@@ -479,6 +493,8 @@ public class FCLApplication extends Application implements Application.ActivityL
         if (currentActivityRef.get() == activity) {
             currentActivityRef.clear();
         }
+        // 清理水印记录，避免内存泄漏
+        watermarkedActivities.remove(activity);
     }
 
     public static FCLApplication getInstance() {
