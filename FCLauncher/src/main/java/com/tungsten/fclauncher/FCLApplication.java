@@ -357,14 +357,18 @@ public class FCLApplication extends Application implements Application.ActivityL
         return "0.0.0.0";
     }
 
-    // ---------- 平铺水印 View（小字体 + 大间距）----------
+    // ---------- 平铺水印 View（优化防止重叠，自动修正间距）----------
     private static class TiledWatermarkView extends View {
-        private final String watermarkText;   // 内容为 "IP  IP" (两个空格)
+        private final String watermarkText;
         private final Paint textPaint;
-        private final float textSizeSp = 20f;   // 调小字体
-        private final float spacingDp = 200f;   // 增大间距，更稀疏
-        private float spacingPx;
+        private final float textSizeSp = 18f;      // 字体大小
+        private final float spacingDp = 250f;      // 用户期望间距
+        private float spacingPx;                   // 实际使用的间距（可能被修正）
         private float textSizePx;
+        private float textWidth;
+        private float textHeight;
+        private float startXOffset;                 // 起始偏移量，使排列更错落
+        private float startYOffset;
 
         public TiledWatermarkView(Context context, String ip) {
             super(context);
@@ -377,8 +381,24 @@ public class FCLApplication extends Application implements Application.ActivityL
 
             textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             textPaint.setTextSize(textSizePx);
-            textPaint.setColor(Color.parseColor("#08000000")); // 极淡黑色，透明度约3%
+            textPaint.setColor(Color.parseColor("#06000000"));
             textPaint.setStyle(Paint.Style.FILL);
+
+            // 测量文本尺寸
+            textWidth = textPaint.measureText(watermarkText);
+            Paint.FontMetrics fm = textPaint.getFontMetrics();
+            textHeight = fm.descent - fm.ascent;
+
+            // 防止因配置不当导致重叠：最小间距应为文本宽度和文本高度的较大值的 1.2 倍
+            float minSpacing = Math.max(textWidth, textHeight) * 1.2f;
+            if (spacingPx < minSpacing) {
+                Log.w(TAG, "Watermark spacing " + spacingPx + "px is too small, adjusting to " + minSpacing + "px");
+                spacingPx = minSpacing;
+            }
+
+            // 偏移量设为半个间距，使水印平铺时交错，减少对齐重叠感
+            startXOffset = spacingPx / 2f;
+            startYOffset = spacingPx / 2f;
 
             setClickable(false);
             setFocusable(false);
@@ -394,15 +414,17 @@ public class FCLApplication extends Application implements Application.ActivityL
             int height = getHeight();
             if (width <= 0 || height <= 0) return;
 
-            float textWidth = textPaint.measureText(watermarkText);
-            float textHeight = -textPaint.ascent() + textPaint.descent();
-
             canvas.save();
             canvas.rotate(-45f, width / 2f, height / 2f);
 
-            // 微调起始偏移，使分布更均匀（非必须，可自行调整）
-            for (float x = -width; x < width + textWidth; x += spacingPx) {
-                for (float y = -height; y < height + textHeight; y += spacingPx) {
+            // 计算需要绘制的行列数，扩大边界确保覆盖整个旋转后的区域
+            float startX = -width + startXOffset;
+            float endX = width + textWidth;
+            float startY = -height + startYOffset;
+            float endY = height + textHeight;
+
+            for (float x = startX; x < endX; x += spacingPx) {
+                for (float y = startY; y < endY; y += spacingPx) {
                     canvas.drawText(watermarkText, x, y, textPaint);
                 }
             }
@@ -412,7 +434,7 @@ public class FCLApplication extends Application implements Application.ActivityL
 
         @Override
         public boolean onTouchEvent(android.view.MotionEvent event) {
-            return false; // 完全不响应触摸
+            return false;
         }
     }
 
@@ -422,7 +444,6 @@ public class FCLApplication extends Application implements Application.ActivityL
     private void addWatermark(Activity activity, String ipAddress) {
         if (activity == null || activity.isFinishing()) return;
 
-        // 关键：如果该 Activity 已经添加过水印，直接返回
         if (watermarkedActivities.contains(activity)) {
             Log.v(TAG, "Watermark already added for this activity, skip");
             return;
@@ -431,7 +452,6 @@ public class FCLApplication extends Application implements Application.ActivityL
         ViewGroup rootView = (ViewGroup) activity.getWindow().getDecorView();
         View oldWatermark = rootView.findViewById(WATERMARK_VIEW_ID);
         if (oldWatermark != null) {
-            // 已有水印视图但记录可能丢失（极少见），依然认为已添加
             watermarkedActivities.add(activity);
             return;
         }
@@ -493,7 +513,6 @@ public class FCLApplication extends Application implements Application.ActivityL
         if (currentActivityRef.get() == activity) {
             currentActivityRef.clear();
         }
-        // 清理水印记录，避免内存泄漏
         watermarkedActivities.remove(activity);
     }
 
