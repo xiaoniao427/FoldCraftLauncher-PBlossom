@@ -361,8 +361,8 @@ public class FCLApplication extends Application implements Application.ActivityL
     private static class TiledWatermarkView extends View {
         private final String watermarkText;   // 内容为 "IP  IP" (两个空格)
         private final Paint textPaint;
-        private final float textSizeSp = 25f;   // 调小字体
-        private final float spacingDp = 80f;   // 增大间距，更稀疏
+        private final float textSizeSp = 20f;   // 调小字体
+        private final float spacingDp = 200f;   // 增大间距，更稀疏
         private float spacingPx;
         private float textSizePx;
 
