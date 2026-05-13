@@ -353,17 +353,18 @@ public class FCLApplication extends Application implements Application.ActivityL
 
     // ---------- 平铺水印 View（每行两个 IP，极淡透明，无描边）----------
     private static class TiledWatermarkView extends View {
-        private final String watermarkText;   // 内容为 "IP IP"
+        private final String watermarkText;   // 内容为 "IP  IP" (两个空格)
         private final Paint textPaint;
-        private final float textSizeSp = 24f;
+        // 优化点2：文字大小从24sp增大到36sp
+        private final float textSizeSp = 36f;
         private final float spacingDp = 150f;
         private float spacingPx;
         private float textSizePx;
 
         public TiledWatermarkView(Context context, String ip) {
             super(context);
-            // 每行显示两个相同的 IP，中间用空格分隔
-            this.watermarkText = ip + " " + ip;
+            // 优化点3：两个IP间使用两个空格
+            this.watermarkText = ip + "  " + ip;
 
             textSizePx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, textSizeSp,
                     getResources().getDisplayMetrics());
@@ -410,13 +411,19 @@ public class FCLApplication extends Application implements Application.ActivityL
         }
     }
 
+    /**
+     * 添加水印（优化点1：防止重复渲染）
+     * 如果水印视图已经存在则不再重复添加
+     */
     private void addWatermark(Activity activity, String ipAddress) {
         if (activity == null || activity.isFinishing()) return;
 
         ViewGroup rootView = (ViewGroup) activity.getWindow().getDecorView();
         View oldWatermark = rootView.findViewById(WATERMARK_VIEW_ID);
+        // 水印已存在，直接返回，避免重复添加/移除
         if (oldWatermark != null) {
-            rootView.removeView(oldWatermark);
+            Log.v(TAG, "Watermark already exists, skip adding");
+            return;
         }
 
         TiledWatermarkView watermark = new TiledWatermarkView(activity, ipAddress);
