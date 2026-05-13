@@ -45,8 +45,8 @@ android {
         applicationId = "com.pblossom.fcl.server"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 12985
-        versionName = "1.2.9.8.5"
+        versionCode = 12986
+        versionName = "1.2.9.8.6"
     }
 
     androidResources {
