@@ -54,10 +54,10 @@ public class AboutPage extends FCLCommonPage implements View.OnClickListener {
         String url = null;
 
         if (v == launcher) {
-            url = "https://fcl-team.github.io/";
+            url = "https://share.lihuayuluo.dpdns.org/";
         }
         if (v == developer) {
-            url = "https://github.com/root-S7";
+            url = "https://github.com/xiaoniao427";
         }
         if (v == discord) {
             url = GENERAL_SETTING.getProperty("discord-url", null);
@@ -66,10 +66,10 @@ public class AboutPage extends FCLCommonPage implements View.OnClickListener {
             joinQQGroup(QQ_GROUP_KEY);
         }
         if (v == sponsor) {
-            url = "https://afdian.com/@tungs";
+            url = "https://afdian.com/@tzhd427";
         }
         if (v == source) {
-            url = "https://github.com/root-S7/FoldCraftLauncher";
+            url = "https://github.com/xiaoniao427/FoldCraftLauncher-PBlossom/";
         }
 
         if (url != null) {
