@@ -351,24 +351,31 @@ public class FCLApplication extends Application implements Application.ActivityL
         return "0.0.0.0";
     }
 
-    // ---------- 平铺水印 View（每行两个 IP，极淡透明，无描边）----------
+    // ---------- 平铺水印 View（每行两个 IP，极淡透明，无描边，自适应屏幕尺寸）----------
     private static class TiledWatermarkView extends View {
         private final String watermarkText;   // 内容为 "IP IP"
         private final Paint textPaint;
-        private final float textSizeSp = 20f;
-        private final float spacingDp = 150f;
-        private float spacingPx;
         private float textSizePx;
+        private float spacingPx;
 
         public TiledWatermarkView(Context context, String ip) {
             super(context);
             // 每行显示两个相同的 IP，中间用空格分隔
             this.watermarkText = ip + " " + ip;
 
-            textSizePx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, textSizeSp,
-                    getResources().getDisplayMetrics());
-            spacingPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, spacingDp,
-                    getResources().getDisplayMetrics());
+            // 获取屏幕尺寸（像素）
+            android.util.DisplayMetrics dm = context.getResources().getDisplayMetrics();
+            int screenWidthPx = dm.widthPixels;
+            int screenHeightPx = dm.heightPixels;
+            int shortSidePx = Math.min(screenWidthPx, screenHeightPx);
+
+            // 文字大小：短边的 1/35，范围 12px ~ 48px
+            textSizePx = shortSidePx / 35f;
+            textSizePx = Math.max(12f, Math.min(48f, textSizePx));
+
+            // 间距：短边的 1/4，范围 80px ~ 300px
+            spacingPx = shortSidePx / 4f;
+            spacingPx = Math.max(80f, Math.min(300f, spacingPx));
 
             textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             textPaint.setTextSize(textSizePx);
