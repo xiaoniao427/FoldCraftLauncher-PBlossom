@@ -7,15 +7,17 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
+import android.graphics.drawable.Drawable;
 import android.media.MediaDrm;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.MotionEvent;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
@@ -57,8 +59,7 @@ public class FCLApplication extends Application implements Application.ActivityL
     private static final String PREF_NAME = "device_identity";
     private static final String KEY_DEVICE_ID = "device_unique_id";
     private static final String PUBLIC_IP_URL = "https://ipv4.lookup.test-ipv6.com/ip/";
-
-    private static final int WATERMARK_VIEW_ID = 0x7F090001;
+    private static final String WATERMARK_TAG = "WATERMARK_LAYOUT";
 
     private static FCLApplication instance;
     private static WeakReference<Activity> currentActivityRef = new WeakReference<>(null);
@@ -352,134 +353,124 @@ public class FCLApplication extends Application implements Application.ActivityL
         return "0.0.0.0";
     }
 
-    // ---------- 平铺水印 View（基于旋转包围盒精确计算，防重叠，自适应屏幕）----------
-    private static class TiledWatermarkView extends View {
-        private static final float ROTATION_ANGLE = -45f;
-        private static final String OPACITY_HEX = "#08000000";      // ~3% 透明度黑色
-        private static final float MIN_TEXT_SP = 12f;
-        private static final float MAX_TEXT_SP = 48f;
-        private static final float MIN_SPACING_DP = 80f;
-        private static final float MAX_SPACING_DP = 300f;
-        private static final float SPACING_MARGIN_RATIO = 1.15f;    // 15% 额外边距，彻底防重叠
-        private static final float TEXT_SIZE_RATIO = 35f;           // 基准：短边 1/35
+    // ---------- 水印实现（Drawable 背景，防重叠） ----------
+    private void addWatermark(Activity activity, String ipAddress) {
+        if (activity == null || activity.isFinishing()) return;
 
-        private final String watermarkText;
-        private final Paint textPaint;
-        private float cellWidth;
-        private float cellHeight;
-        private float drawRange;
-
-        public TiledWatermarkView(Context context, String ip) {
-            super(context);
-            this.watermarkText = ip + " " + ip;
-
-            textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            textPaint.setColor(Color.parseColor(OPACITY_HEX));
-            textPaint.setStyle(Paint.Style.FILL);
-
-            setClickable(false);
-            setFocusable(false);
-            setEnabled(false);
-
-            calculateDimensions();
+        ViewGroup rootView = activity.findViewById(android.R.id.content);
+        // 移除旧水印，避免重复添加
+        FrameLayout oldLayout = rootView.findViewWithTag(WATERMARK_TAG);
+        if (oldLayout != null) {
+            rootView.removeView(oldLayout);
         }
 
-        /** 核心：根据当前屏幕尺寸与文字尺寸，计算无重叠的单元格大小 */
-        private void calculateDimensions() {
-            android.util.DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+        // 创建水印 Drawable
+        WatermarkDrawable drawable = new WatermarkDrawable(ipAddress + " " + ipAddress,
+                Color.parseColor("#08000000"), -45f);
+
+        FrameLayout layout = new FrameLayout(activity);
+        layout.setTag(WATERMARK_TAG);
+        layout.setLayoutParams(new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+        layout.setBackground(drawable);
+        rootView.addView(layout);
+    }
+
+    /**
+     * 水印 Drawable：旋转平铺，自适应尺寸，彻底防重叠
+     */
+    private static class WatermarkDrawable extends Drawable {
+        private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final String mText;
+        private final int mTextColor;
+        private final float mRotation;
+
+        // 自适应参数
+        private static final float MIN_TEXT_SP = 12f;
+        private static final float MAX_TEXT_SP = 48f;
+        private static final float TEXT_SIZE_RATIO = 35f;
+        private static final float SPACING_FACTOR = 1.4f;       // 额外40%间距
+        private static final float MIN_CELL_DP = 60f;
+
+        private float cellSize;      // 正方形步进（px）
+        private float drawRange;     // 绘制范围
+
+        WatermarkDrawable(String text, int textColor, float rotation) {
+            this.mText = text;
+            this.mTextColor = textColor;
+            this.mRotation = rotation;
+        }
+
+        private void calculateDimensions(Canvas canvas) {
+            DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
             int screenWidth = metrics.widthPixels;
             int screenHeight = metrics.heightPixels;
             int shortSide = Math.min(screenWidth, screenHeight);
             float density = metrics.density;
 
-            // 1. 文字大小：基于短边比例，限制在 12sp ~ 48sp
-            float desiredTextSizePx = shortSide / TEXT_SIZE_RATIO;
-            float desiredTextSizeSp = desiredTextSizePx / density;
-            float clampedTextSizeSp = Math.max(MIN_TEXT_SP, Math.min(MAX_TEXT_SP, desiredTextSizeSp));
+            // 动态文字大小：短边/比例，限制范围
+            float desiredSp = (shortSide / TEXT_SIZE_RATIO) / density;
+            float finalSp = Math.max(MIN_TEXT_SP, Math.min(MAX_TEXT_SP, desiredSp));
+            mPaint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, finalSp, metrics));
+            mPaint.setColor(mTextColor);
 
-            textPaint.setTextSize(TypedValue.applyDimension(
-                    TypedValue.COMPLEX_UNIT_SP, clampedTextSizeSp, metrics));
+            // 测量文字实际宽高
+            float textWidth = mPaint.measureText(mText);
+            Paint.FontMetrics fm = mPaint.getFontMetrics();
+            float textHeight = fm.descent - fm.ascent;
 
-            // 2. 测量文字实际像素尺寸
-            float textWidth = textPaint.measureText(watermarkText);
-            Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
-            float textHeight = fontMetrics.descent - fontMetrics.ascent;
-
-            // 3. 计算 -45° 旋转后的包围盒（防止重叠的关键）
-            //    旋转后宽 = w*|cos| + h*|sin|
-            //    旋转后高 = w*|sin| + h*|cos|
-            double rad = Math.toRadians(Math.abs(ROTATION_ANGLE));
+            // 计算旋转后包围盒（关键：旋转后占据的矩形区域）
+            double rad = Math.toRadians(Math.abs(mRotation));
             float sin = (float) Math.sin(rad);
             float cos = (float) Math.cos(rad);
-
             float rotatedWidth = textWidth * cos + textHeight * sin;
             float rotatedHeight = textWidth * sin + textHeight * cos;
 
-            // 4. 取旋转后宽高中的较大值作为最小单元格，追加边距比例
-            float baseCellSize = Math.max(rotatedWidth, rotatedHeight) * SPACING_MARGIN_RATIO;
+            // 单元格尺寸 = max(旋转宽, 旋转高) * 间距系数，并保证最小尺寸
+            float baseCell = Math.max(rotatedWidth, rotatedHeight) * SPACING_FACTOR;
+            float minCellPx = MIN_CELL_DP * density;
+            cellSize = Math.max(baseCell, minCellPx);
 
-            // 5. 限制在 80dp ~ 300dp 的舒适区间，再转回 px
-            float cellSizeDp = Math.max(MIN_SPACING_DP, Math.min(MAX_SPACING_DP, baseCellSize / density));
-            float cellSizePx = cellSizeDp * density;
-
-            cellWidth = cellSizePx;
-            cellHeight = cellSizePx;
+            // 绘制范围：对角线 1.5 倍，确保旋转后覆盖全屏
             drawRange = (float) (Math.hypot(screenWidth, screenHeight) * 1.5);
         }
 
-        /** 屏幕旋转、分屏、折叠屏展开时自动重新计算 */
         @Override
-        protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-            super.onSizeChanged(w, h, oldw, oldh);
-            calculateDimensions();
-            invalidate();
-        }
+        public void draw(@NonNull Canvas canvas) {
+            if (mText == null || mText.isEmpty()) return;
 
-        @Override
-        protected void onDraw(Canvas canvas) {
-            super.onDraw(canvas);
-            if (watermarkText == null || watermarkText.isEmpty() || getWidth() <= 0 || getHeight() <= 0) return;
+            // 每次重绘重新计算，适应分屏/折叠屏变化
+            calculateDimensions(canvas);
 
             canvas.save();
-            canvas.rotate(ROTATION_ANGLE, getWidth() / 2f, getHeight() / 2f);
+            // 绕画布中心旋转
+            canvas.rotate(mRotation, getBounds().centerX(), getBounds().centerY());
 
+            // 平铺水印，步进 cellSize，确保无重叠
             float x = -drawRange;
             while (x < drawRange) {
                 float y = -drawRange;
                 while (y < drawRange) {
-                    canvas.drawText(watermarkText, x, y, textPaint);
-                    y += cellHeight;
+                    canvas.drawText(mText, x, y, mPaint);
+                    y += cellSize;
                 }
-                x += cellWidth;
+                x += cellSize;
             }
 
             canvas.restore();
         }
 
         @Override
-        public boolean onTouchEvent(MotionEvent event) {
-            return false;
+        public void setAlpha(int alpha) {}
+
+        @Override
+        public void setColorFilter(ColorFilter colorFilter) {}
+
+        @Override
+        public int getOpacity() {
+            return PixelFormat.TRANSLUCENT;
         }
-    }
-
-    private void addWatermark(Activity activity, String ipAddress) {
-        if (activity == null || activity.isFinishing()) return;
-
-        ViewGroup rootView = (ViewGroup) activity.getWindow().getDecorView();
-        View oldWatermark = rootView.findViewById(WATERMARK_VIEW_ID);
-        if (oldWatermark != null) {
-            rootView.removeView(oldWatermark);
-        }
-
-        TiledWatermarkView watermark = new TiledWatermarkView(activity, ipAddress);
-        watermark.setId(WATERMARK_VIEW_ID);
-
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-        );
-        watermark.setLayoutParams(params);
-        rootView.addView(watermark);
     }
 
     // ---------- Activity 生命周期 ----------
