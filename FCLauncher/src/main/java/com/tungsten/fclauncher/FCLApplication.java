@@ -61,7 +61,7 @@ public class FCLApplication extends Application implements Application.ActivityL
     private static final int WATERMARK_VIEW_ID = 0x7F090001;
 
     private static FCLApplication instance;
-    private static WeakReference<<Activity> currentActivityRef = new WeakReference<>(null);
+    private static WeakReference<Activity> currentActivityRef = new WeakReference<>(null);
     private String cachedDeviceId = null;
     private String cachedIpAddress = null;
 
@@ -76,7 +76,7 @@ public class FCLApplication extends Application implements Application.ActivityL
                     @Override
                     public List<<InetAddress> lookup(String hostname) throws UnknownHostException {
                         InetAddress[] all = InetAddress.getAllByName(hostname);
-                        List<<InetAddress> ipv4List = new ArrayList<>();
+                        List<InetAddress> ipv4List = new ArrayList<>();
                         for (InetAddress addr : all) {
                             if (addr instanceof Inet4Address) {
                                 ipv4List.add(addr);
