@@ -74,7 +74,7 @@ public class FCLApplication extends Application implements Application.ActivityL
                 .readTimeout(30, TimeUnit.SECONDS)
                 .dns(new Dns() {
                     @Override
-                    public List<<InetAddress> lookup(String hostname) throws UnknownHostException {
+                    public List<InetAddress> lookup(String hostname) throws UnknownHostException {
                         InetAddress[] all = InetAddress.getAllByName(hostname);
                         List<InetAddress> ipv4List = new ArrayList<>();
                         for (InetAddress addr : all) {
