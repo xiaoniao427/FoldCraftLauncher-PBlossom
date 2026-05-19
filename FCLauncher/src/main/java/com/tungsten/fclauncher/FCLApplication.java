@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
@@ -353,18 +354,16 @@ public class FCLApplication extends Application implements Application.ActivityL
         return "0.0.0.0";
     }
 
-    // ---------- 水印实现（Drawable 背景，防重叠） ----------
+    // ---------- 水印实现 ----------
     private void addWatermark(Activity activity, String ipAddress) {
         if (activity == null || activity.isFinishing()) return;
 
         ViewGroup rootView = activity.findViewById(android.R.id.content);
-        // 移除旧水印，避免重复添加
         FrameLayout oldLayout = rootView.findViewWithTag(WATERMARK_TAG);
         if (oldLayout != null) {
             rootView.removeView(oldLayout);
         }
 
-        // 创建水印 Drawable
         WatermarkDrawable drawable = new WatermarkDrawable(ipAddress + " " + ipAddress,
                 Color.parseColor("#08000000"), -45f);
 
@@ -377,24 +376,20 @@ public class FCLApplication extends Application implements Application.ActivityL
         rootView.addView(layout);
     }
 
-    /**
-     * 水印 Drawable：旋转平铺，自适应尺寸，彻底防重叠
-     */
     private static class WatermarkDrawable extends Drawable {
         private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final String mText;
         private final int mTextColor;
         private final float mRotation;
 
-        // 自适应参数
         private static final float MIN_TEXT_SP = 12f;
         private static final float MAX_TEXT_SP = 48f;
         private static final float TEXT_SIZE_RATIO = 35f;
-        private static final float SPACING_FACTOR = 1.4f;       // 额外40%间距
+        private static final float SPACING_FACTOR = 1.4f;
         private static final float MIN_CELL_DP = 60f;
 
-        private float cellSize;      // 正方形步进（px）
-        private float drawRange;     // 绘制范围
+        private float cellSize;
+        private float drawRange;
 
         WatermarkDrawable(String text, int textColor, float rotation) {
             this.mText = text;
@@ -402,52 +397,44 @@ public class FCLApplication extends Application implements Application.ActivityL
             this.mRotation = rotation;
         }
 
-        private void calculateDimensions(Canvas canvas) {
-            DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
-            int screenWidth = metrics.widthPixels;
-            int screenHeight = metrics.heightPixels;
-            int shortSide = Math.min(screenWidth, screenHeight);
+        private void calculateDimensions() {
+            DisplayMetrics metrics = Resources.getSystem().getDisplayMetrics();
+            int width = getBounds().width();
+            int height = getBounds().height();
+            int shortSide = Math.min(width, height);
             float density = metrics.density;
 
-            // 动态文字大小：短边/比例，限制范围
             float desiredSp = (shortSide / TEXT_SIZE_RATIO) / density;
             float finalSp = Math.max(MIN_TEXT_SP, Math.min(MAX_TEXT_SP, desiredSp));
             mPaint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, finalSp, metrics));
             mPaint.setColor(mTextColor);
 
-            // 测量文字实际宽高
             float textWidth = mPaint.measureText(mText);
             Paint.FontMetrics fm = mPaint.getFontMetrics();
             float textHeight = fm.descent - fm.ascent;
 
-            // 计算旋转后包围盒（关键：旋转后占据的矩形区域）
             double rad = Math.toRadians(Math.abs(mRotation));
             float sin = (float) Math.sin(rad);
             float cos = (float) Math.cos(rad);
             float rotatedWidth = textWidth * cos + textHeight * sin;
             float rotatedHeight = textWidth * sin + textHeight * cos;
 
-            // 单元格尺寸 = max(旋转宽, 旋转高) * 间距系数，并保证最小尺寸
             float baseCell = Math.max(rotatedWidth, rotatedHeight) * SPACING_FACTOR;
             float minCellPx = MIN_CELL_DP * density;
             cellSize = Math.max(baseCell, minCellPx);
 
-            // 绘制范围：对角线 1.5 倍，确保旋转后覆盖全屏
-            drawRange = (float) (Math.hypot(screenWidth, screenHeight) * 1.5);
+            drawRange = (float) (Math.hypot(width, height) * 1.5);
         }
 
         @Override
-        public void draw(@NonNull Canvas canvas) {
+        public void draw(Canvas canvas) {
             if (mText == null || mText.isEmpty()) return;
 
-            // 每次重绘重新计算，适应分屏/折叠屏变化
-            calculateDimensions(canvas);
+            calculateDimensions();
 
             canvas.save();
-            // 绕画布中心旋转
             canvas.rotate(mRotation, getBounds().centerX(), getBounds().centerY());
 
-            // 平铺水印，步进 cellSize，确保无重叠
             float x = -drawRange;
             while (x < drawRange) {
                 float y = -drawRange;
