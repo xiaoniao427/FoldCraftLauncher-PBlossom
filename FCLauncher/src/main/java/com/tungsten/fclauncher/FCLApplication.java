@@ -14,6 +14,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -60,7 +61,7 @@ public class FCLApplication extends Application implements Application.ActivityL
     private static final int WATERMARK_VIEW_ID = 0x7F090001;
 
     private static FCLApplication instance;
-    private static WeakReference<Activity> currentActivityRef = new WeakReference<>(null);
+    private static WeakReference<<Activity> currentActivityRef = new WeakReference<>(null);
     private String cachedDeviceId = null;
     private String cachedIpAddress = null;
 
@@ -73,9 +74,9 @@ public class FCLApplication extends Application implements Application.ActivityL
                 .readTimeout(30, TimeUnit.SECONDS)
                 .dns(new Dns() {
                     @Override
-                    public List<InetAddress> lookup(String hostname) throws UnknownHostException {
+                    public List<<InetAddress> lookup(String hostname) throws UnknownHostException {
                         InetAddress[] all = InetAddress.getAllByName(hostname);
-                        List<InetAddress> ipv4List = new ArrayList<>();
+                        List<<InetAddress> ipv4List = new ArrayList<>();
                         for (InetAddress addr : all) {
                             if (addr instanceof Inet4Address) {
                                 ipv4List.add(addr);
@@ -163,7 +164,7 @@ public class FCLApplication extends Application implements Application.ActivityL
         saveDeviceId(fallbackId);
         cachedDeviceId = fallbackId;
         Log.w(TAG, "Widevine ID unavailable, generated fallback UUID: " + fallbackId);
-        return fallbackId;
+        return cachedDeviceId;
     }
 
     private String getWidevineDeviceId() {
@@ -351,69 +352,113 @@ public class FCLApplication extends Application implements Application.ActivityL
         return "0.0.0.0";
     }
 
-    // ---------- 平铺水印 View（每行两个 IP，极淡透明，无描边，自适应屏幕尺寸）----------
+    // ---------- 平铺水印 View（基于旋转包围盒精确计算，防重叠，自适应屏幕）----------
     private static class TiledWatermarkView extends View {
-        private final String watermarkText;   // 内容为 "IP IP"
+        private static final float ROTATION_ANGLE = -45f;
+        private static final String OPACITY_HEX = "#08000000";      // ~3% 透明度黑色
+        private static final float MIN_TEXT_SP = 12f;
+        private static final float MAX_TEXT_SP = 48f;
+        private static final float MIN_SPACING_DP = 80f;
+        private static final float MAX_SPACING_DP = 300f;
+        private static final float SPACING_MARGIN_RATIO = 1.15f;    // 15% 额外边距，彻底防重叠
+        private static final float TEXT_SIZE_RATIO = 35f;           // 基准：短边 1/35
+
+        private final String watermarkText;
         private final Paint textPaint;
-        private float textSizePx;
-        private float spacingPx;
+        private float cellWidth;
+        private float cellHeight;
+        private float drawRange;
 
         public TiledWatermarkView(Context context, String ip) {
             super(context);
-            // 每行显示两个相同的 IP，中间用空格分隔
             this.watermarkText = ip + " " + ip;
 
-            // 获取屏幕尺寸（像素）
-            android.util.DisplayMetrics dm = context.getResources().getDisplayMetrics();
-            int screenWidthPx = dm.widthPixels;
-            int screenHeightPx = dm.heightPixels;
-            int shortSidePx = Math.min(screenWidthPx, screenHeightPx);
-
-            // 文字大小：短边的 1/35，范围 12px ~ 48px
-            textSizePx = shortSidePx / 35f;
-            textSizePx = Math.max(12f, Math.min(48f, textSizePx));
-
-            // 间距：短边的 1/4，范围 80px ~ 300px
-            spacingPx = shortSidePx / 4f;
-            spacingPx = Math.max(80f, Math.min(300f, spacingPx));
-
             textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            textPaint.setTextSize(textSizePx);
-            textPaint.setColor(Color.parseColor("#08000000")); // 极淡黑色，透明度约3%
+            textPaint.setColor(Color.parseColor(OPACITY_HEX));
             textPaint.setStyle(Paint.Style.FILL);
 
             setClickable(false);
             setFocusable(false);
             setEnabled(false);
+
+            calculateDimensions();
+        }
+
+        /** 核心：根据当前屏幕尺寸与文字尺寸，计算无重叠的单元格大小 */
+        private void calculateDimensions() {
+            android.util.DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+            int screenWidth = metrics.widthPixels;
+            int screenHeight = metrics.heightPixels;
+            int shortSide = Math.min(screenWidth, screenHeight);
+            float density = metrics.density;
+
+            // 1. 文字大小：基于短边比例，限制在 12sp ~ 48sp
+            float desiredTextSizePx = shortSide / TEXT_SIZE_RATIO;
+            float desiredTextSizeSp = desiredTextSizePx / density;
+            float clampedTextSizeSp = Math.max(MIN_TEXT_SP, Math.min(MAX_TEXT_SP, desiredTextSizeSp));
+
+            textPaint.setTextSize(TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_SP, clampedTextSizeSp, metrics));
+
+            // 2. 测量文字实际像素尺寸
+            float textWidth = textPaint.measureText(watermarkText);
+            Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
+            float textHeight = fontMetrics.descent - fontMetrics.ascent;
+
+            // 3. 计算 -45° 旋转后的包围盒（防止重叠的关键）
+            //    旋转后宽 = w*|cos| + h*|sin|
+            //    旋转后高 = w*|sin| + h*|cos|
+            double rad = Math.toRadians(Math.abs(ROTATION_ANGLE));
+            float sin = (float) Math.sin(rad);
+            float cos = (float) Math.cos(rad);
+
+            float rotatedWidth = textWidth * cos + textHeight * sin;
+            float rotatedHeight = textWidth * sin + textHeight * cos;
+
+            // 4. 取旋转后宽高中的较大值作为最小单元格，追加边距比例
+            float baseCellSize = Math.max(rotatedWidth, rotatedHeight) * SPACING_MARGIN_RATIO;
+
+            // 5. 限制在 80dp ~ 300dp 的舒适区间，再转回 px
+            float cellSizeDp = Math.max(MIN_SPACING_DP, Math.min(MAX_SPACING_DP, baseCellSize / density));
+            float cellSizePx = cellSizeDp * density;
+
+            cellWidth = cellSizePx;
+            cellHeight = cellSizePx;
+            drawRange = (float) (Math.hypot(screenWidth, screenHeight) * 1.5);
+        }
+
+        /** 屏幕旋转、分屏、折叠屏展开时自动重新计算 */
+        @Override
+        protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+            super.onSizeChanged(w, h, oldw, oldh);
+            calculateDimensions();
+            invalidate();
         }
 
         @Override
         protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
-            if (watermarkText == null || watermarkText.isEmpty()) return;
-
-            int width = getWidth();
-            int height = getHeight();
-            if (width <= 0 || height <= 0) return;
-
-            float textWidth = textPaint.measureText(watermarkText);
-            float textHeight = -textPaint.ascent() + textPaint.descent();
+            if (watermarkText == null || watermarkText.isEmpty() || getWidth() <= 0 || getHeight() <= 0) return;
 
             canvas.save();
-            canvas.rotate(-45f, width / 2f, height / 2f);
+            canvas.rotate(ROTATION_ANGLE, getWidth() / 2f, getHeight() / 2f);
 
-            for (float x = -width; x < width + textWidth; x += spacingPx) {
-                for (float y = -height; y < height + textHeight; y += spacingPx) {
+            float x = -drawRange;
+            while (x < drawRange) {
+                float y = -drawRange;
+                while (y < drawRange) {
                     canvas.drawText(watermarkText, x, y, textPaint);
+                    y += cellHeight;
                 }
+                x += cellWidth;
             }
 
             canvas.restore();
         }
 
         @Override
-        public boolean onTouchEvent(android.view.MotionEvent event) {
-            return false; // 完全不响应触摸
+        public boolean onTouchEvent(MotionEvent event) {
+            return false;
         }
     }
 
